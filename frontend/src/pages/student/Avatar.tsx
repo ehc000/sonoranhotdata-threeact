@@ -1,0 +1,3 @@
+import type { Student } from '../../types';
+const avatars=['🦊','🐻','🐼','🦉','🚀','🎨','🐱','🌈'];
+export default function Avatar({student,onUpdate}:{student:Student;onUpdate:(changes:Partial<Student>)=>void}) {return <div className="page narrow"><p className="eyebrow">MAKE IT YOURS</p><h1>Choose your avatar</h1><p className="lead">Pick a character you like. You can change it anytime.</p><div className="card"><div className="avatar-preview">{student.avatar}</div><div className="avatar-grid">{avatars.map(avatar=><button key={avatar} className={'avatar-option '+(student.avatar===avatar?'chosen':'')} onClick={()=>onUpdate({avatar})} aria-label={`Choose ${avatar} avatar`}>{avatar}</button>)}</div></div></div>}

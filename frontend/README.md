@@ -1,36 +1,54 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Adaptive Classroom — React frontend prototype
 
-## Getting Started
+A working **React + TypeScript + Vite** frontend for an adaptive classroom application.
 
-First, run the development server:
+## Run it
+
+Requires a current supported Node.js LTS version (Node 20.19+ or 22.12+ recommended for Vite 6 compatibility).
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open the URL shown in Terminal (normally http://localhost:5173).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+To check production compilation:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm run build
+```
 
-## Learn More
+## What works
 
-To learn more about Next.js, take a look at the following resources:
+- Student / Teacher choice screen (no login, passwords, or accounts)
+- Separate role-specific navigation and pages
+- Student: Home, Calibration, Learn, Profile, Avatar
+- Teacher: Dashboard, Students, Assignments, Analytics, Settings
+- Calibration preferences, avatar choices, and teacher edits
+- Step-by-step fractions lesson with answer feedback and demo progress update
+- Mock assignments and progress metrics
+- Browser-local persistence for student data and assignments
+- Responsive layout and central CSS styling in `src/styles/global.css`
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Important limitations
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+**This is a frontend-only demo.** There is no login or authentication. Anyone can choose either role. It is NOT safe for real student records, actual teacher permissions, or production deployment. All students and metrics are fictional sample data. `localStorage` is browser-local and not secure storage for student information.
 
-## Deploy on Vercel
+Before real classroom use, implement authenticated accounts, backend authorization for every request, teacher-student assignment checks, secure storage, and applicable student privacy requirements. Do not enter actual student data into this demo.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Where to customize the look
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- `src/styles/global.css`: colors, typography, spacing, responsive behavior
+- `src/components/Sidebar.tsx`: navigation appearance
+- `src/pages/student/`: student pages
+- `src/pages/teacher/`: teacher pages
+- `src/App.tsx`: role selection layout
+
+## Connecting Python and LLM APIs later
+
+Keep Python `avatar/`, `content/`, `learning/`, `profiles/`, and `llm/` modules outside this frontend project. When ready, expose them via a server-side API (for example FastAPI) and call it from React using `fetch`. **Never put LLM API secrets in browser code or `VITE_` environment variables.**
+
+## Testing notes
+
+Choose Student or Teacher on the opening screen. Test calibration changes, avatar changes, the lesson, and teacher assignments. Refresh to see that sample profile data persists locally. Use Switch view in the sidebar to choose the other role. Use your browser's developer tools to test Chromebook-sized viewports.

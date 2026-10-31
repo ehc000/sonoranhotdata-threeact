@@ -1,16 +1,38 @@
-from fastapi import FastAPI
+
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
+
+# Import teammate's LLM function
+from backend.llm_query import query_llm
 
 app = FastAPI(title="Adaptive Classroom API")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
-    allow_credentials=True,
+    allow_origins=["http://localhost:5173"],
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
+class PromptRequest(BaseModel):
+    prompt: str
+
 @app.get("/health")
 def health():
-    return {"status": "ok", "message": "Classroom backend running"}
+    return {"status": "ok"}
+
+@app.post("/api/generate")
+def generate(request: PromptRequest):
+    try:
+        result = query_llm(request.prompt)
+
+        return {
+            "response": result
+        }
+
+    except Exception:
+        raise HTTPException(
+            status_code=500,
+            detail="LLM generation failed"
+        )
