@@ -1,0 +1,6 @@
+# merge these lines into the repo's .gitignore
+.env
+logs/
+__pycache__/
+.pytest_cache/
+.venv/

@@ -219,4 +219,13 @@ __marimo__/
 # Streamlit
 .streamlit/secrets.toml
 
+# curriculum-gen/educator loop additions
+
+.env
+logs/
+__pycache__/
+.pytest_cache/
+.venv/
+
+
 
