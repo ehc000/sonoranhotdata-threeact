@@ -29,11 +29,10 @@ class Preferences(BaseModel):
     nickname: str = Field(default="", max_length=20)  # what the buddy calls the student, never the full name
     interests: list[Annotated[str, Field(max_length=40)]] = Field(default=[], max_length=30)
     work_style: list[Literal["hands_on", "design", "computer", "writing"]] = []
-    content_format: Literal["text", "images", "audio", "mixed"] = "mixed"  # how the student likes the steps
-    sounds_bother: Literal["yes", "no", "sometimes"] = "sometimes"
-    motion_bother: Literal["yes", "no", "sometimes"] = "sometimes"
+    read_aloud: bool = False  # access need: True reads every step out loud. Steps always show pictures and text
     help_mode: Literal["ask", "check_in"] = "check_in"  # check_in = the app checks on the student if they seem stuck
-    goal: Literal["finishing_projects", "asking_for_help", "staying_organized", "working_alone"] | None = None
+    goal: Literal["finishing_projects", "asking_for_help", "staying_organized", "working_alone"] | None = None  # one thing to get better at
+    sounds_and_animations: bool = False  # calm by default; a settings switch, not a question
     break_minutes: Literal[2, 5] = 2  # set by the teacher, not asked to the student
 
 

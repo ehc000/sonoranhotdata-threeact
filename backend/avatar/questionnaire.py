@@ -1,15 +1,17 @@
-"""Onboarding questionnaire definition: eight short questions about the student's preferences.
+"""Onboarding questionnaire definition: six short questions about the student's preferences.
 
 A question has a type:
   "text"   - a short typed answer (only the nickname)
   "choice" - the student taps one or more options
 
 Each option has an id (what the screen remembers), a label (what the student sees) and
-a value (what gets saved in Preferences). "Not sure" is always allowed: on single-choice
-questions it saves the gentle default, on multi-choice questions the student just skips.
+a value (what gets saved in Preferences). On the help question, "Not sure" saves the
+gentle default; on the goal question it saves nothing. On the multi-choice questions the student can skip, which also means "not sure".
 
-Break length is not asked: the teacher sets it (2 or 5 minutes).
-Session length is not asked either: the school sets it.
+Not asked here, on purpose:
+  - Break length: the teacher sets it (2 or 5 minutes).
+  - Session length: the school sets it.
+  - Sounds and animations: calm by default, with one on/off switch in settings.
 """
 
 
@@ -36,35 +38,22 @@ QUESTIONS = [
     },
     {
         "id": "work_style", "field": "work_style", "type": "choice", "multi": True,
-        "title": "How do you like to work?",
+        "title": "What kind of projects do you enjoy?",
         "options": _opts(
-            ("hands_on", "🛠️ Building with my hands"), ("design", "✏️ Drawing or designing"),
+            ("hands_on", "🛠️ Building"), ("design", "✏️ Drawing or designing"),
             ("computer", "💻 Using the computer"), ("writing", "📝 Writing"),
         ),
     },
     {
-        "id": "content_format", "field": "content_format", "type": "choice", "multi": False,
-        "title": "How do you like your steps?",
-        "options": _opts(
-            ("images", "🖼️ Show me pictures"), ("audio", "🔊 Read them to me"),
-            ("text", "📄 Let me read them"), ("mixed", "🔀 A mix"),
-        ),
-    },
-    {
-        "id": "sounds_bother", "field": "sounds_bother", "type": "choice", "multi": False,
-        "title": "Do sounds bother you?",
-        "options": _opts(("yes", "Yes"), ("no", "No"), ("sometimes", "Sometimes"), ("not_sure", "Not sure", "sometimes")),
-    },
-    {
-        "id": "motion_bother", "field": "motion_bother", "type": "choice", "multi": False,
-        "title": "Do moving pictures bother you?",
-        "options": _opts(("yes", "Yes"), ("no", "No"), ("sometimes", "Sometimes"), ("not_sure", "Not sure", "sometimes")),
+        "id": "read_aloud", "field": "read_aloud", "type": "choice", "multi": False,
+        "title": "Do you want your steps read out loud?",
+        "options": _opts(("yes", "🔊 Yes", True), ("no", "No", False)),
     },
     {
         "id": "help_mode", "field": "help_mode", "type": "choice", "multi": False,
         "title": "When you get stuck, what do you want?",
         "options": _opts(
-            ("ask", "✋ I'll ask when I need help"), ("check_in", "👋 Check on me if I'm stuck"),
+            ("ask", "✋ I'll ask"), ("check_in", "👋 Check on me if I'm stuck"),
             ("not_sure", "Not sure", "check_in"),
         ),
     },
