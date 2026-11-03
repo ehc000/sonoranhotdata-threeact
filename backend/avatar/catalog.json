@@ -1,0 +1,14 @@
+{
+  "bases": ["human", "animal", "robot", "creature"],
+  "colors": ["#A8C5DA", "#B8D8BE", "#F2D1A6", "#D9B8D8", "#F0C6C6", "#D6D6A8"],
+  "color_names": ["Blue", "Green", "Peach", "Lilac", "Rose", "Olive"],
+  "heads": {
+    "human": ["human_round", "human_oval", "human_square", "human_soft"],
+    "animal": ["animal_cat", "animal_dog", "animal_rabbit", "animal_bear"],
+    "robot": ["robot_round", "robot_square", "robot_dome", "robot_oval"],
+    "creature": ["creature_blob", "creature_horned", "creature_fuzzy", "creature_finned"]
+  },
+  "eyes": ["dots", "round", "soft_curve", "wide"],
+  "pets": ["plant", "small_animal", "robot_buddy", "creature"],
+  "pet_stages": 5
+}
