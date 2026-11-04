@@ -115,4 +115,9 @@ def init_db():
             event_json TEXT NOT NULL DEFAULT '{}',
             created_at TEXT DEFAULT CURRENT_TIMESTAMP
         );
+
+        CREATE UNIQUE INDEX IF NOT EXISTS
+        dx_enrollments_one_class_per_student
+        ON enrollments(student_id);
+        
         """)
