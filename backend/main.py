@@ -3,11 +3,14 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
-# Import teammate's LLM function
+from backend.educator_loop.api import router as educator_router
 from backend.llm_query import query_llm
 from backend.avatar.router import router as avatar_router
 
 app = FastAPI(title="Adaptive Classroom API")
+
+app.include_router(educator_router)
+app.include_router(avatar_router)
 
 app.add_middleware(
     CORSMiddleware,
@@ -24,18 +27,13 @@ def health():
     return {"status": "ok"}
 
 @app.post("/api/generate")
-def generate(request: PromptRequest):
+async def generate(request: PromptRequest):
     try:
-        result = query_llm(request.prompt)
-
-        return {
-            "response": result
-        }
-
+        result = await query_llm(request.prompt)
+        return {"response": result}
     except Exception:
         raise HTTPException(
             status_code=500,
             detail="LLM generation failed"
         )
-
-app.include_router(avatar_router)
+    

@@ -51,7 +51,7 @@ def _record(prompt_id, messages, reply, usage=None, model=None):
     if usage is not None:
         record["tokens_in"] = getattr(usage, "input_tokens", None) or getattr(usage, "prompt_tokens", None)
         record["tokens_out"] = getattr(usage, "output_tokens", None) or getattr(usage, "completion_tokens", None)
-        CALLS.append(record)
+    CALLS.append(record)
     _log(record)
 
 
