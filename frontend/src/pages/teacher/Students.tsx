@@ -197,7 +197,7 @@ export default function Students({
                       ([key, value]) => (
                         <div className="detail-row" key={key}>
                           <strong>
-                            {key.replaceAll('_', ' ')}
+                            {key.replace(/_/g, ' ')}
                           </strong>
                           <span>{displayValue(value)}</span>
                         </div>

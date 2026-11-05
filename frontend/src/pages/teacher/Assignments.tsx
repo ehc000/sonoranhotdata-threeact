@@ -24,6 +24,9 @@
 
 import { useEffect, useState } from 'react';
 import type { ApiStudent } from '../../api/students';
+// AI-ASSISTED ADDITION (2026-11-05): Local mission rendering, without assignment or persistence.
+import LessonRenderer from '../../components/lesson/LessonRenderer';
+import type { RenderableLesson } from '../../components/lesson/LessonRenderer';
 
 type StoryConcept = {
   id: string;
@@ -122,7 +125,50 @@ type AssembledLesson = {
   conclusion_visual_prompt?: string;
   finale_animation?: { type?: string; target?: string };
   llm_mode: string;
+  // AI-assisted: accept optional mission metadata from newer assembly responses.
+  mission?: unknown;
+  mission_plan?: unknown;
+  milestones?: unknown;
+  trophy?: unknown;
+  presentation?: unknown;
 };
+
+// AI-ASSISTED ADDITION (2026-11-05): Read optional mission metadata safely.
+// The backend may return different mission-plan shapes; the preview falls
+// back to approved question order rather than inventing narrative milestones.
+function asObject(value: unknown): Record<string, unknown> | null {
+  return value !== null && typeof value === 'object' && !Array.isArray(value)
+    ? value as Record<string, unknown> : null;
+}
+
+function firstText(source: Record<string, unknown> | null, keys: string[]): string | null {
+  if (!source) return null;
+  for (const key of keys) {
+    const value = source[key];
+    if (typeof value === 'string' && value.trim()) return value.trim();
+  }
+  return null;
+}
+
+function getMissionSteps(lesson: AssembledLesson): string[] {
+  const mission = asObject(lesson.mission_plan) ?? asObject(lesson.mission);
+  const candidate = Array.isArray(lesson.milestones) ? lesson.milestones
+    : Array.isArray(mission?.milestones) ? mission.milestones
+    : Array.isArray(mission?.steps) ? mission.steps : [];
+  const named = candidate.map((item: unknown) => {
+    if (typeof item === 'string') return item.trim();
+    return firstText(asObject(item), ['short_label', 'label', 'title', 'name', 'goal', 'description']) ?? '';
+  }).filter((step: string) => Boolean(step));
+  if (named.length) return named;
+  return lesson.activities.flatMap(activity => activity.questions)
+    .map((_, index) => `Challenge ${index + 1}`);
+}
+
+function getMissionGoal(lesson: AssembledLesson): string {
+  const mission = asObject(lesson.mission_plan) ?? asObject(lesson.mission);
+  return firstText(mission, ['goal', 'mission_goal', 'objective', 'title', 'summary'])
+    ?? lesson.story.story_goal ?? lesson.objective;
+}
 
 type AssignmentsProps = {
   students: ApiStudent[];
@@ -169,6 +215,43 @@ function getSuggestedObjective(competency: Competency): string {
   return `Develop proficiency in ${label}.`;
 }
 
+// AI-ASSISTED ADDITION (2026-11-05): Adapt the teacher assembly API response
+// to the standalone student-facing renderer. This does not modify the lesson,
+// save progress, assign a student, or perform answer validation.
+function toRenderableLesson(lesson: AssembledLesson): RenderableLesson {
+  const rawMission = asObject(lesson.mission) ?? asObject(lesson.mission_plan);
+  const rawMilestones = Array.isArray(lesson.milestones) ? lesson.milestones : [];
+  const milestones = rawMilestones.flatMap(item => {
+    const record = asObject(item);
+    if (!record) return [];
+    const questionId = firstText(record, ['question_id']);
+    const title = firstText(record, ['title', 'task_title']);
+    return questionId && title ? [{ question_id: questionId, title }] : [];
+  });
+  return {
+    lesson_id: lesson.lesson_id,
+    objective: lesson.objective,
+    story: { title: lesson.story.title },
+    mission: rawMission ? {
+      title: firstText(rawMission, ['title']) ?? undefined,
+      goal: firstText(rawMission, ['goal', 'story_goal']) ?? undefined,
+    } : undefined,
+    milestones,
+    introduction: lesson.introduction,
+    refresher: lesson.refresher,
+    activities: lesson.activities.map(activity => ({
+      activity_number: activity.activity_number,
+      questions: activity.questions.map(question => ({
+        ...question,
+        optional_walkthrough: question.walkthrough,
+      })),
+    })),
+    conclusion: lesson.conclusion,
+    story_complexity: lesson.story_complexity,
+    alignment_warning: lesson.alignment_warning,
+  };
+}
+
 export default function Assignments({
   students,
   selectedStudentId,
@@ -178,6 +261,10 @@ export default function Assignments({
   );
   const [objective, setObjective] = useState('');
   const [teacherInstructions, setTeacherInstructions] = useState('');
+
+  // AI-ASSISTED ADDITION (2026-11-05): Teacher-controlled narrative language level.
+  // Changes generated story wording only, not academic question difficulty.
+  const [storyComplexity, setStoryComplexity] = useState<'simple' | 'moderate' | 'rich'>('simple');
 
   const [concepts, setConcepts] = useState<StoryConcept[]>([]);
   const [selectedConceptId, setSelectedConceptId] = useState<string | null>(null);
@@ -466,7 +553,8 @@ export default function Assignments({
             // explicitly reviewed and saved by the teacher here.
             status: 'ok',
           })),
-          pacing,
+          // AI-ASSISTED MODIFICATION: Pass teacher-selected language level to assembly.
+          pacing: { ...pacing, story_complexity: storyComplexity },
           teacher_approved: true,
         }),
       });
@@ -553,6 +641,25 @@ export default function Assignments({
           }}
           placeholder="What should the student learn?"
         />
+
+        {/* AI-ASSISTED ADDITION (2026-11-05): Language level for generated mission and story text. */}
+        <label htmlFor="lesson-story-language">Story language</label>
+        <select
+          id="lesson-story-language"
+          value={storyComplexity}
+          onChange={event => {
+            setStoryComplexity(event.target.value as 'simple' | 'moderate' | 'rich');
+            setAssembledLesson(null);
+            setAssemblyMessage(null);
+          }}
+        >
+          <option value="simple">Simple</option>
+          <option value="moderate">Moderate</option>
+          <option value="rich">Rich</option>
+        </select>
+        <p className="muted small">
+          Controls generated story wording, not the difficulty or wording of approved questions.
+        </p>
 
         <label htmlFor="lesson-instructions">
           Additional teacher instructions (optional)
@@ -844,6 +951,18 @@ export default function Assignments({
         Generated by: ChatGPT (OpenAI), GPT-6, 2026-11-05
         Notes: Does not generate artwork, persist, or assign lessons.
       */}
+      {/* AI-ASSISTED ADDITION (2026-11-05): Interactive local rendering of
+          the assembled lesson. The existing detailed teacher preview remains below. */}
+      {assembledLesson && (
+        <section aria-label="Interactive lesson rendering" style={{ marginTop: 24 }}>
+          <h2>Student-facing lesson rendering</h2>
+          <p className="muted small">
+            Local rendering only. Simulated progress is not saved and no lesson is assigned.
+          </p>
+          <LessonRenderer key={assembledLesson.lesson_id} lesson={toRenderableLesson(assembledLesson)} />
+        </section>
+      )}
+
       {assembledLesson && (
         <div className="card" id="assembled-lesson-preview">
           <h2>5. Assembled lesson preview</h2>
@@ -859,6 +978,41 @@ export default function Assignments({
               <p>{assembledLesson.alignment_warning}</p>
             </div>
           )}
+
+          {/* AI-ASSISTED ADDITION (2026-11-05): Teacher preview of the
+              student-facing opening slide. The numbered markers belong to
+              the scene layout; the backend still needs real artwork. */}
+          <section aria-label="Mission opening slide preview" style={{ marginTop: 22, marginBottom: 24 }}>
+            <p className="muted small">Student screen preview · Opening slide</p>
+            <div style={{ border: '1px solid #d9dfe7', borderRadius: 18, overflow: 'hidden', background: '#f8fafc', color: '#253246' }}>
+              <div style={{ padding: '14px 20px', background: '#ffffff', borderBottom: '1px solid #e4e9ef', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+                <strong style={{ fontSize: 13, letterSpacing: '.05em' }}>YOUR MISSION</strong>
+                <span style={{ fontSize: 12, color: '#5b6a7e' }}>0 of {getMissionSteps(assembledLesson).length} completed</span>
+              </div>
+              <div style={{ padding: 22 }}>
+                <h3 style={{ margin: '0 0 8px', color: '#253246' }}>{assembledLesson.story.title}</h3>
+                <p style={{ margin: '0 0 20px', lineHeight: 1.6 }}>{getMissionGoal(assembledLesson)}</p>
+                <div style={{ borderRadius: 16, padding: '22px 18px', background: 'linear-gradient(150deg, #dbe9ee, #e8e9df 60%, #dce5d9)', border: '1px solid #cbd9d8' }}>
+                  <p style={{ margin: '0 0 18px', fontSize: 12, fontWeight: 700, letterSpacing: '.06em', color: '#3b5561' }}>MISSION STEPS</p>
+                  <div style={{ display: 'grid', gap: 10, maxWidth: 480, margin: '0 auto' }}>
+                    {getMissionSteps(assembledLesson).map((step, index) => (
+                      <div key={`${index}-${step}`} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 13px', background: 'rgba(255,255,255,.88)', borderRadius: 12, border: '1px solid rgba(110,136,144,.25)' }}>
+                        <span style={{ flexShrink: 0, width: 29, height: 29, borderRadius: 9, background: '#3f6675', color: '#fff', display: 'grid', placeItems: 'center', fontSize: 13, fontWeight: 700 }}>{index + 1}</span>
+                        <span style={{ fontWeight: 600, fontSize: 14 }}>{step}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <p style={{ fontSize: 12, color: '#657386', margin: '12px 0 0' }}>
+                  Artwork placeholder: scene and step markers can be layered over an approved mission image later.
+                </p>
+                <details style={{ marginTop: 12, fontSize: 13 }}>
+                  <summary>Opening illustration description (teacher only)</summary>
+                  <p>{assembledLesson.introduction_visual_prompt || 'No illustration description returned.'}</p>
+                </details>
+              </div>
+            </div>
+          </section>
 
           <h3>Opening story</h3>
           <p>{assembledLesson.introduction}</p>
@@ -920,7 +1074,24 @@ export default function Assignments({
             </section>
           ))}
 
-          <h3>Story finale</h3>
+          {/* AI-ASSISTED ADDITION (2026-11-05): Separate finale and trophy
+              screens in teacher preview. Trophy is a presentation placeholder,
+              not an awarded or persisted achievement. */}
+          <div style={{ marginTop: 26, padding: 18, borderRadius: 16, background: '#edf3f2', border: '1px solid #d5e2df' }}>
+            <p className="muted small">Student screen preview · Mission complete</p>
+            <h3 style={{ marginTop: 4 }}>Mission complete</h3>
+            <p>{assembledLesson.conclusion}</p>
+            <p className="muted small">Completed-scene illustration: {assembledLesson.conclusion_visual_prompt || 'Not yet provided'}</p>
+          </div>
+          <div style={{ marginTop: 14, padding: 22, borderRadius: 16, textAlign: 'center', background: '#f6f3e9', border: '1px solid #e6dfca' }}>
+            <p className="muted small">Student screen preview · Trophy presentation</p>
+            <div aria-hidden="true" style={{ fontSize: 38, lineHeight: 1.4 }}>🏆</div>
+            <h3 style={{ margin: '8px 0' }}>Mission accomplished!</h3>
+            <p style={{ margin: 0 }}>You completed {getMissionSteps(assembledLesson).length} mission steps.</p>
+            <p className="muted small" style={{ marginBottom: 0 }}>Trophy artwork and personalized award details can be connected when the backend provides them.</p>
+          </div>
+
+          <h3>Finale details (teacher review)</h3>
           <p>{assembledLesson.conclusion}</p>
           {assembledLesson.conclusion_visual_prompt && (
             <p className="muted small"><strong>Scene description:</strong> {assembledLesson.conclusion_visual_prompt}</p>

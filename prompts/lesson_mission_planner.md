@@ -33,3 +33,11 @@ OUTPUT SCHEMA:
   ],
   "alignment_warning": null
 }
+
+
+## Required language-level behavior (AI-assisted MVP update)
+Use `presentation.story_complexity` for ALL student-facing mission fields: mission.title, mission.goal, mission.starting_state, mission.final_state, milestone.title, milestone.purpose, and milestone.unlocks. Do not change the question IDs, question meanings, number of steps, or academic difficulty.
+- **simple**: Use familiar, literal words and concrete actions. Milestone titles should usually be 2–5 words (e.g. "Fix the floor", not "Adjust fortress elevation"). One idea per sentence. Avoid abstract terms such as "net shift", "coordinate adjustment", or "population management" unless the teacher's academic objective requires them; explain required terms plainly. Short sentences, usually 5–10 words where natural. Keep every milestone, not just a summary.
+- **moderate**: Use natural, age-respectful language with one short explanation of why each task matters. Titles remain short and action-oriented. Allow modest context, without extra tasks.
+- **rich**: Use more vivid, age-respectful language and story context while keeping every task explicit, the goal concrete, and the text easy to follow. Avoid unnecessary jargon.
+These levels affect text, not art complexity, sensory preferences, motion, help availability, or academic expectations. Image prompts may be descriptive for the image service at every level; do not force student-facing prose constraints onto technical image prompts.
