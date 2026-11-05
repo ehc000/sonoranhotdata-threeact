@@ -1,3 +1,4 @@
+import type { LessonAvatarChoice } from './LessonAvatarSprite';
 /**
  * Purpose: Standalone Fraction Fortress visual lesson preview (v4).
  * Directed and reviewed by: Edenna Chen
@@ -16,6 +17,7 @@ import type { Complexity } from './LessonScene';
 const buttonStyle: React.CSSProperties = { padding: '11px 17px', border: '2px solid #627895', borderRadius: 10, background: '#fff', color: '#1b3551', fontWeight: 700, cursor: 'pointer', fontSize: 15 };
 
 export default function MockLesson() {
+  const [lessonAvatar] = useState<LessonAvatarChoice | null>(() => { try { const raw=localStorage.getItem('sonoran-lesson-avatar-preview'); return raw ? JSON.parse(raw) as LessonAvatarChoice : null; } catch { return null; } });
   const [complexity, setComplexity] = useState<Complexity>('Moderate');
   const [stage, setStage] = useState<Stage>('intro');
   const [index, setIndex] = useState(0);
@@ -35,7 +37,7 @@ export default function MockLesson() {
       </select>
       <span style={{ fontSize: 13, color: '#53677d' }}>Same math questions and bridge progress in all modes</span>
     </div>
-    <LessonScene built={built} finale={stage==='finale'} complexity={complexity}/>
+    <LessonScene built={built} finale={stage==='finale'} complexity={complexity} avatar={lessonAvatar}/>
     <section style={{ background: '#f1f5f9', border: '1px solid #d5e0e9', borderRadius: 14, padding: 22, marginTop: 16 }}>
       {stage==='intro' && <><h2>Your mission</h2><p>{lesson.story.intro[complexity]}</p><button style={buttonStyle} onClick={()=>setStage('refresher')}>Start mission →</button></>}
       {stage==='refresher' && <><h2>Quick refresher</h2><p>{lesson.story.refresher[complexity]}</p><button style={buttonStyle} onClick={()=>setStage('challenge')}>Try a challenge →</button></>}

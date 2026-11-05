@@ -1,3 +1,4 @@
+import LessonAvatarSprite, { type LessonAvatarChoice } from './LessonAvatarSprite';
 /**
  * File: LessonScene.tsx
  * Purpose: One continuous pixel-art scene at three visual detail levels.
@@ -9,7 +10,7 @@
 import type { CSSProperties } from 'react';
 export type Complexity = 'Simple' | 'Moderate' | 'Rich';
 /** Detailed, deterministic SVG tile scene. Reuses the same scenery at every stage. */
-export default function LessonScene({ built, finale, complexity }: { built: number; finale: boolean; complexity: Complexity }) {
+export default function LessonScene({ built, finale, complexity, avatar }: { built: number; finale: boolean; complexity: Complexity; avatar?: LessonAvatarChoice | null }) {
   const simple = complexity === 'Simple';
   const rich = complexity === 'Rich';
   const stones = Array.from({ length: 8 }, (_, i) => i);
@@ -57,19 +58,10 @@ export default function LessonScene({ built, finale, complexity }: { built: numb
     {stones.map(i => { const x=202+i*41; const active=i<built; return <g key={i}><rect x={x} y="275" width="38" height="34" fill={active?'#cda36d':'#8bb7c5'} opacity={active?1:.6} stroke={active?'#7d624d':'#d4eff0'} strokeWidth="3" strokeDasharray={active?'none':'5 5'}/>{active&&<><path d={`M${x+4} 284h30M${x+19} 284v20`} stroke="#efd3a0" strokeWidth="3"/><rect x={x+5} y="300" width="29" height="4" fill="#946f52"/></>}</g>; })}
     {/* Flowers and stones */}
     {rich && [29,68,125,168,548,590,707,763].map((x,i)=><g key={x}><rect x={x} y={345+i%3*11} width="7" height="5" fill={i%2?'#ffe6a2':'#f6b8d2'}/><rect x={x+3} y={350+i%3*11} width="2" height="9" fill="#326e48"/></g>)}
-    {/* Full-body fox adventurer, with scarf, satchel, boots */}
-    <g transform={`translate(${finale?560:107} 243)`}>
-      <path d="M51 64 H60 V56 H69 V48 H77 V59 H80 V68 H70 V76 H59 V81 H51Z" fill="#b75c36" stroke="#7c4539" strokeWidth="3"/>
-      <rect x="21" y="64" width="17" height="29" fill="#334d78"/><rect x="42" y="64" width="17" height="29" fill="#334d78"/>
-      <rect x="18" y="86" width="22" height="11" fill="#523f46"/><rect x="40" y="86" width="23" height="11" fill="#523f46"/>
-      <rect x="14" y="34" width="50" height="36" fill="#436f9b" stroke="#2f4c6e" strokeWidth="4"/>
-      <rect x="8" y="42" width="10" height="27" fill="#d88b4e"/><rect x="61" y="42" width="10" height="27" fill="#d88b4e"/>
-      <path d="M12 34 V7 H18 V-10 H25 V-2 H33 V3 H47 V-2 H54 V-10 H60 V7 H65 V34Z" fill="#db8546" stroke="#995335" strokeWidth="4"/>
-      <path d="M19 23 H59 V30 H53 V35 H48 V38 H30 V35 H25 V30 H19Z" fill="#f7e5be"/>
-      <rect x="24" y="15" width="6" height="7" fill="#283d49"/><rect x="48" y="15" width="6" height="7" fill="#283d49"/><rect x="37" y="26" width="6" height="5" fill="#493c3d"/>
-      <path d="M17 36h45v10H17Z" fill="#c94656"/><path d="M48 43h10v20H48Z" fill="#c94656"/>
-      <rect x="51" y="52" width="17" height="15" fill="#a97948" stroke="#72583f" strokeWidth="3"/>
-    </g>
+          {/* Separate full-body avatar layer; bridge/castle/river are unchanged. */}
+      <g transform={`translate(${finale?560:107} 243)`}>
+        <LessonAvatarSprite choice={avatar}/>
+      </g>
     <rect x="17" y="15" width="267" height="38" fill="#1d3758" opacity=".88"/><text x="29" y="40" fill="#fff2d2" fontSize="20" fontWeight="bold">FRACTION FORTRESS</text>
     <rect x="17" y="60" width="160" height="27" fill="#fff5df"/><text x="29" y="79" fill="#30465d" fontSize="15" fontWeight="bold">Bridge: {built} / 8</text>
   </svg>;

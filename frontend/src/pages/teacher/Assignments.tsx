@@ -103,6 +103,8 @@ type PreviewQuestion = {
   optional_reminder?: string;
   reminder?: string;
   walkthrough?: string[];
+  // AI-assisted fix (2026-11-05): Match backend-generated help field.
+  optional_walkthrough?: string[];
   visual_prompt?: string;
 };
 
@@ -243,7 +245,9 @@ function toRenderableLesson(lesson: AssembledLesson): RenderableLesson {
       activity_number: activity.activity_number,
       questions: activity.questions.map(question => ({
         ...question,
-        optional_walkthrough: question.walkthrough,
+        // AI-assisted fix (2026-11-05):
+        // Preserve help steps returned by the lesson assembly API.
+        optional_walkthrough: question.optional_walkthrough ?? question.walkthrough,
       })),
     })),
     conclusion: lesson.conclusion,
