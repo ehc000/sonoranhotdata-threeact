@@ -1,70 +1,47 @@
 /**
- * Purpose: Standalone mock lesson renderer for Fraction Fortress.
- *
- * Original application: Sonoran Hot Data adaptive classroom project.
- * New implementation: Hardcoded lesson preview with pixel-art visuals,
- * fraction challenges, story progression, and simulated completion.
- *
+ * Purpose: Standalone Fraction Fortress visual lesson preview (v4).
  * Directed and reviewed by: Edenna Chen
- * Code generated with assistance from: ChatGPT (OpenAI), GPT-6
- * Date: 2026-11-05
- *
- * Human edits: To be updated as the team modifies this component.
- * External sources: None.
- *
- * Notes:
- * - Uses mock lesson content; no LLM API calls.
- * - Does not modify student mastery, completion, or database records.
- * - Does not trigger pet-growth events.
- * - Intended for testing the renderer before generated story integration.
+ * AI-assisted implementation: ChatGPT (OpenAI), GPT-6, 2026-11-05.
+ * Original project components and Miguel's avatar work are not modified.
+ * No external assets, API calls, grading, database writes, or pet-growth events.
+ * V4: JSON-driven copy and shared three-level scene; preserves the existing UI flow.
+ * Language selection changes narrative and visual detail, never math or answer choices.
  */
-
 import { useState } from 'react';
 
-type Stage = 'intro' | 'refresher' | 'challenge' | 'success' | 'finale';
-const questions = [
-  { prompt: 'The bridge has 8 blocks. You need 1/2 of them to cross. How many blocks is that?', options: ['2', '4', '6'], answer: '4', hint: 'Half means splitting into two equal groups. 8 ÷ 2 = ?' },
-  { prompt: 'The next bridge has 12 blocks. You need 1/4 of them. How many blocks?', options: ['3', '4', '6'], answer: '3', hint: 'One quarter means one of four equal groups. 12 ÷ 4 = ?' },
-];
+import LessonScene from './LessonScene';
+import lesson from './mockLesson.json';
+import type { Complexity } from './LessonScene';
 
-function Scene({ built, name }: { built: number; name: string }) {
-  return <svg viewBox="0 0 640 280" role="img" aria-label={`Pixel-art castle scene. ${built} bridge segments repaired.`} style={{ width: '100%', maxHeight: 320, imageRendering: 'pixelated', borderRadius: 12, background: '#a9d9f5' }}>
-    <rect x="0" y="182" width="640" height="98" fill="#8fca83" />
-    <rect x="0" y="222" width="640" height="58" fill="#59b6d8" />
-    <rect x="468" y="80" width="120" height="126" fill="#8b8da9" /><rect x="448" y="62" width="160" height="24" fill="#666b8e" />
-    {[460, 494, 528, 562, 596].map(x => <rect key={x} x={x} y="45" width="19" height="28" fill="#666b8e" />)}
-    <rect x="518" y="146" width="34" height="60" rx="16" fill="#3b425d" />
-    <rect x="34" y="177" width="165" height="46" fill="#68a760" />
-    {Array.from({length: 8}, (_, i) => <rect key={i} x={196 + i * 33} y="195" width="30" height="22" fill={i < built ? '#c89962' : '#d7edf4'} stroke={i < built ? '#8d623f' : '#91c5d9'} strokeWidth="3" />)}
-    <g transform="translate(112 126)">
-      <rect x="14" y="0" width="38" height="38" fill="#df9154" /><rect x="4" y="-11" width="20" height="23" fill="#df9154" /><rect x="42" y="-11" width="20" height="23" fill="#df9154" />
-      <rect x="21" y="13" width="7" height="7" fill="#28283a" /><rect x="41" y="13" width="7" height="7" fill="#28283a" />
-      <rect x="20" y="38" width="28" height="35" fill="#427eb6" /><rect x="20" y="70" width="10" height="19" fill="#41415a" /><rect x="38" y="70" width="10" height="19" fill="#41415a" />
-    </g>
-    <text x="145" y="118" textAnchor="middle" fontSize="16" fontWeight="bold" fill="#25354b">{name}</text>
-    <text x="24" y="30" fontSize="16" fontWeight="bold" fill="#25354b">The Fraction Fortress</text>
-  </svg>;
-}
+const buttonStyle: React.CSSProperties = { padding: '11px 17px', border: '2px solid #627895', borderRadius: 10, background: '#fff', color: '#1b3551', fontWeight: 700, cursor: 'pointer', fontSize: 15 };
 
 export default function MockLesson() {
+  const [complexity, setComplexity] = useState<Complexity>('Moderate');
   const [stage, setStage] = useState<Stage>('intro');
   const [index, setIndex] = useState(0);
   const [choice, setChoice] = useState('');
   const [help, setHelp] = useState(false);
   const [built, setBuilt] = useState(0);
-  const question = questions[index];
-  const btn = { padding: '10px 16px', borderRadius: 9, border: '1px solid #b5bdca', cursor: 'pointer', background: '#fff', fontSize: 15 } as const;
-  const next = () => { setChoice(''); setHelp(false); if (index + 1 < questions.length) { setIndex(index + 1); setStage('challenge'); } else setStage('finale'); };
-  return <main style={{ maxWidth: 760, margin: '24px auto', padding: 20, fontFamily: 'system-ui, sans-serif', color: '#24344d' }}>
-    <p style={{ letterSpacing: 2, fontSize: 12, fontWeight: 700 }}>TEACHER PREVIEW · MOCK DATA ONLY</p>
-    <h1>Fraction Fortress</h1>
-    <Scene built={built} name="Alex" />
-    <section style={{ background: '#f5f7fb', borderRadius: 14, padding: 22, marginTop: 18 }}>
-      {stage === 'intro' && <><h2>Your mission</h2><p>Alex the fox needs your help to repair the bridge and reach the castle! Each fraction problem restores a part of the bridge.</p><button style={btn} onClick={() => setStage('refresher')}>Start mission →</button></>}
-      {stage === 'refresher' && <><h2>Quick refresher</h2><p>A fraction tells us how many equal parts of a whole we want. To find <strong>1/2 of 8</strong>, split 8 into 2 equal groups.</p><button style={btn} onClick={() => setStage('challenge')}>Try a challenge →</button></>}
-      {stage === 'challenge' && <><p>CHALLENGE {index + 1} OF {questions.length}</p><h2>{question.prompt}</h2><div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>{question.options.map(option => <button key={option} style={{ ...btn, background: choice === option ? '#d9eaff' : '#fff', borderColor: choice === option ? '#3676b8' : '#b5bdca' }} onClick={() => setChoice(option)}>{option} blocks</button>)}</div><div style={{ display: 'flex', gap: 10, marginTop: 18 }}><button style={btn} onClick={() => setHelp(!help)}>{help ? 'Hide hint' : 'Need a hint?'}</button><button style={btn} disabled={!choice} onClick={() => { setBuilt((index + 1) * 4); setStage('success'); }}>Continue →</button></div>{help && <p role="status" style={{ padding: 12, background: '#fff6d9', borderRadius: 8 }}>{question.hint}</p>}<p style={{ fontSize: 12, opacity: .75 }}>Demo only: selecting an answer advances without grading.</p></>}
-      {stage === 'success' && <><h2>Bridge progress!</h2><p>Alex places more blocks on the bridge. You're getting closer to the fortress.</p><button style={btn} onClick={next}>{index + 1 < questions.length ? 'Next challenge →' : 'Finish mission →'}</button></>}
-      {stage === 'finale' && <><h2>🏆 Mission complete!</h2><p>The bridge is repaired and Alex reaches the fortress. Great teamwork!</p><button style={btn} onClick={() => { setStage('intro'); setIndex(0); setBuilt(0); setChoice(''); setHelp(false); }}>Replay demo ↺</button></>}
+  const question = lesson.questions[index];
+  const reset = () => { setStage('intro'); setIndex(0); setChoice(''); setHelp(false); setBuilt(0); };
+  const next = () => { setChoice(''); setHelp(false); if (index < lesson.questions.length-1) { setIndex(index+1); setStage('challenge'); } else setStage('finale'); };
+  return <main style={{ maxWidth: 850, margin: '24px auto', padding: '16px', fontFamily: 'system-ui, sans-serif', color: '#22364d' }}>
+    <p style={{ fontSize: 12, fontWeight: 800, letterSpacing: 1.4 }}>STANDALONE DEMO · NO SAVED PROGRESS</p>
+    <h1 style={{ marginBottom: 8 }}>Fraction Fortress</h1>
+    <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap', marginBottom: 15 }}>
+      <label htmlFor="story-complexity" style={{ fontWeight: 700 }}>Story language and visuals</label>
+      <select id="story-complexity" value={complexity} onChange={e=>setComplexity(e.target.value as Complexity)} style={{ padding: '9px 12px', borderRadius: 8, border: '1px solid #7c8b9f', fontSize: 15 }}>
+        <option>Simple</option><option>Moderate</option><option>Rich</option>
+      </select>
+      <span style={{ fontSize: 13, color: '#53677d' }}>Same math questions and bridge progress in all modes</span>
+    </div>
+    <LessonScene built={built} finale={stage==='finale'} complexity={complexity}/>
+    <section style={{ background: '#f1f5f9', border: '1px solid #d5e0e9', borderRadius: 14, padding: 22, marginTop: 16 }}>
+      {stage==='intro' && <><h2>Your mission</h2><p>{lesson.story.intro[complexity]}</p><button style={buttonStyle} onClick={()=>setStage('refresher')}>Start mission →</button></>}
+      {stage==='refresher' && <><h2>Quick refresher</h2><p>{lesson.story.refresher[complexity]}</p><button style={buttonStyle} onClick={()=>setStage('challenge')}>Try a challenge →</button></>}
+      {stage==='challenge' && <><p style={{ fontWeight: 800, fontSize: 13 }}>CHALLENGE {index+1} OF {lesson.questions.length}</p><p style={{ lineHeight: 1.55, marginBottom: 8 }}>{question.narrative[complexity]}</p><h2>{question.prompt}</h2><div style={{ display:'flex', flexWrap:'wrap', gap:10 }}>{question.options.map(option=><button key={option} aria-pressed={choice===option} onClick={()=>setChoice(option)} style={{ ...buttonStyle, background:choice===option?'#d8e9ff':'#fff', borderColor:choice===option?'#2b68a2':'#627895' }}>{option} stones</button>)}</div><div style={{ display:'flex', flexWrap:'wrap', gap:10, marginTop:18 }}><button style={buttonStyle} onClick={()=>setHelp(!help)}>{help?'Hide hint':'Need a hint?'}</button><button style={{...buttonStyle, opacity:choice?1:.5}} disabled={!choice} onClick={()=>{setBuilt(question.bridge_sections_after);setStage('success');}}>Place bridge stones →</button></div>{help&&<p role="status" style={{ padding:12, background:'#fff3c9', borderRadius:8 }}>{question.hint}</p>}<p style={{fontSize:12,color:'#526477'}}>Preview only: any selected answer advances; no grading is performed.</p></>}
+      {stage==='success' && <><h2>Bridge progress!</h2><p>{lesson.story.success[complexity]}</p><button style={buttonStyle} onClick={next}>{index<lesson.questions.length-1?'Next challenge →':'Finish mission →'}</button></>}
+      {stage==='finale' && <><h2>🏆 Mission complete!</h2><p>{lesson.story.finale[complexity]}</p><button style={buttonStyle} onClick={reset}>Replay lesson ↺</button></>}
     </section>
   </main>;
 }

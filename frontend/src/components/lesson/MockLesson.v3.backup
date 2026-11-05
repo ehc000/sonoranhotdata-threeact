@@ -1,0 +1,123 @@
+/**
+ * Purpose: Standalone Fraction Fortress visual lesson preview (v3).
+ * Directed and reviewed by: Edenna Chen
+ * AI-assisted implementation: ChatGPT (OpenAI), GPT-6, 2026-11-05.
+ * Original project components and Miguel's avatar work are not modified.
+ * No external assets, API calls, grading, database writes, or pet-growth events.
+ * V3: Pixel-stepped linework and distinct Simple / Moderate / Rich challenge dialogue.
+ * Language selection changes story text only, never math or answer choices.
+ */
+import { useState } from 'react';
+
+type Complexity = 'Simple' | 'Moderate' | 'Rich';
+type Stage = 'intro' | 'refresher' | 'challenge' | 'success' | 'finale';
+type Copy = Record<Complexity, string>;
+const story = {
+  intro: { Simple: 'Alex needs to cross the river. Fix the bridge by solving two fraction puzzles.', Moderate: 'Alex the fox has reached a river. Solve two fraction puzzles to rebuild the bridge and reach the castle.', Rich: 'Beyond the emerald meadow, the gates of Fraction Fortress shimmer in the distance. Alex the fox must restore the ancient river bridge by solving two fraction puzzles.' },
+  refresher: { Simple: 'A fraction is part of a whole. Half of 8 means 8 split into 2 equal groups.', Moderate: 'A fraction represents equal parts of a whole. To find one-half of 8, divide 8 into two equal groups.', Rich: 'Every bridge stone belongs to a larger whole. A fraction describes equal shares: one-half of 8 means separating 8 stones into two equal groups.' },
+  success: { Simple: 'More bridge pieces appear! Keep going.', Moderate: 'Alex places another set of stones. The bridge is taking shape!', Rich: 'With a satisfying click, another stretch of golden stones locks into place. The path to the fortress grows stronger!' },
+  finale: { Simple: 'You finished the bridge! Alex can cross.', Moderate: 'The bridge is complete, and Alex can finally reach the castle!', Rich: 'The last stone settles into place. The river glitters below as Alex crosses the restored bridge and arrives at the gates of Fraction Fortress!' },
+} satisfies Record<string, Copy>;
+const questions = [
+  { prompt: 'The bridge has 8 stones. How many stones are in 1/2 of the bridge?', options: ['2', '4', '6'], hint: 'Divide 8 into 2 equal groups: 8 ÷ 2 = ?' },
+  { prompt: 'A second section has 12 stones. How many stones are in 1/4 of it?', options: ['3', '4', '6'], hint: 'Divide 12 into 4 equal groups: 12 ÷ 4 = ?' },
+];
+// V3: Challenge narration changes with language mode; the academic prompts stay fixed.
+const challengeStory: Copy[] = [
+  {
+    Simple: 'Alex sees 8 stones. Find half to help fix the bridge.',
+    Moderate: 'Alex finds eight stones by the river. Work out how many make up half of them.',
+    Rich: 'At the riverbank, Alex discovers eight weathered stones. To restore the first stretch of the bridge, determine how many stones form one-half of the collection.',
+  },
+  {
+    Simple: 'There are 12 more stones. Find one-fourth.',
+    Moderate: 'Alex finds twelve more stones. Work out how many make up one-quarter of them.',
+    Rich: 'A second pile of twelve stones waits beside the fortress river. Alex needs one-quarter of that pile to finish the crossing.',
+  },
+];
+
+const buttonStyle: React.CSSProperties = { padding: '11px 17px', border: '2px solid #627895', borderRadius: 10, background: '#fff', color: '#1b3551', fontWeight: 700, cursor: 'pointer', fontSize: 15 };
+
+/** Detailed, deterministic SVG tile scene. Reuses the same scenery at every stage. */
+function FortressScene({ built, finale }: { built: number; finale: boolean }) {
+  const stones = Array.from({ length: 8 }, (_, i) => i);
+  return <svg viewBox="0 0 800 390" role="img" aria-label={`Pixel-art fantasy valley with a fox, river and castle. ${built} of 8 bridge sections restored.`} style={{ display: 'block', width: '100%', borderRadius: 4, imageRendering: 'pixelated', background: '#a4dbf4' }}>
+    <defs>
+      <pattern id="grassTile" width="40" height="40" patternUnits="userSpaceOnUse"><rect width="40" height="40" fill="#7bc46e"/><path d="M7 31v-7m4 6v-4m18-12v-6m4 6v-3" stroke="#4b9957" strokeWidth="2"/><rect x="17" y="33" width="4" height="4" fill="#e7d67b"/></pattern>
+      <pattern id="waterTile" width="64" height="35" patternUnits="userSpaceOnUse"><rect width="64" height="35" fill="#358ac0"/><path d="M4 12h23m15 13h19M8 29h10" stroke="#8bd9e8" strokeWidth="3"/><path d="M28 6h16" stroke="#226da7" strokeWidth="3"/></pattern>
+      <pattern id="stoneTile" width="36" height="24" patternUnits="userSpaceOnUse"><rect width="36" height="24" fill="#b7b8c3"/><path d="M0 12h36M18 0v12M8 12v12M29 12v12" stroke="#83899d" strokeWidth="2"/></pattern>
+    </defs>
+    <rect width="800" height="390" fill="#a7def4"/>
+    <g fill="#f9f7e9"><rect x="82" y="40" width="108" height="20"/><rect x="108" y="22" width="57" height="20"/><rect x="540" y="45" width="120" height="19"/><rect x="562" y="29" width="74" height="18"/></g>
+    <path d="M0 202 H42 V170 H70 V143 H95 V113 H119 V143 H145 V170 H181 V198 H220 V169 H246 V141 H271 V117 H295 V147 H324 V177 H354 V208 H438 V176 H459 V151 H480 V130 H504 V151 H533 V179 H561 V206 H664 V171 H685 V142 H704 V115 H727 V142 H750 V173 H778 V203 H800 V293 H0Z" fill="#8aaec0"/><path d="M0 229 H49 V206 H78 V177 H108 V153 H132 V180 H160 V204 H198 V228 H244 V199 H272 V172 H301 V151 H326 V180 H358 V206 H414 V235 H484 V205 H511 V182 H537 V163 H561 V185 H591 V207 H650 V229 H706 V201 H730 V174 H757 V151 H779 V174 H800 V182 V297 H0Z" fill="#608e9d"/>
+    <rect x="0" y="239" width="800" height="151" fill="url(#grassTile)"/>
+    <path d="M0 314 H90 V307 H170 V299 H235 V303 H322 V308 H418 V302 H515 V296 H610 V300 H710 V297 H800 V390 H0Z" fill="#5da855" opacity=".55"/>
+    <path d="M190 258 H226 V250 H260 V241 H303 V235 H348 V241 H385 V249 H406 V255 H480 V258 H565 V251 H650 V253 H800 V390 H183 V281 H190Z" fill="url(#waterTile)"/>
+    <path d="M188 260 H226 V252 H260 V243 H303 V237 H348 V243 H385 V251 H406 V259 H480 V262 H565 V255 H650 V257 H800" fill="none" stroke="#b5e9e4" strokeWidth="8"/>
+    <path d="M187 375 H230 V366 H270 V358 H315 V352 H365 V356 H410 V366 H460 V375 H505 V379" fill="none" stroke="#b5e9e4" strokeWidth="7" opacity=".7"/>
+    {/* Pine trees: layered triangular crowns and trunks */}
+    {[35,91,155,615,738,782].map((x,i) => <g key={x} transform={`translate(${x} ${i%2?171:190})`}><rect x="-6" y="56" width="12" height="48" fill="#79513e"/><path d="M-8 0 H8 V17 H17 V33 H26 V49 H37 V65 H-37 V49 H-26 V33 H-17 V17 H-8Z" fill="#285d50"/><path d="M-9 19 H9 V35 H17 V50 H25 V65 H31 V79 H-31 V65 H-25 V50 H-17 V35 H-9Z" fill="#317c5b"/><path d="M-10 40 H10 V55 H19 V67 H28 V80 H36 V92 H-36 V80 H-28 V67 H-19 V55 H-10Z" fill="#236448"/><path d="M-10 48h12" stroke="#83b17a" strokeWidth="5"/></g>)}
+    {/* Castle on the far shore */}
+    <g transform="translate(515 104)">
+      <rect x="36" y="66" width="202" height="135" fill="url(#stoneTile)" stroke="#616c84" strokeWidth="5"/>
+      <rect x="5" y="34" width="67" height="167" fill="url(#stoneTile)" stroke="#616c84" strokeWidth="5"/>
+      <rect x="200" y="34" width="67" height="167" fill="url(#stoneTile)" stroke="#616c84" strokeWidth="5"/>
+      {[8,30,52,202,224,246].map(x => <rect key={x} x={x} y="14" width="18" height="31" fill="#707c94"/>)}
+      {[52,78,104,130,156,182,208].map(x => <rect key={x} x={x} y="50" width="18" height="27" fill="#7d889e"/>)}
+      <path d="M109 201 V143 H115 V132 H122 V122 H132 V115 H143 V115 H153 V122 H160 V132 H165 V143 V201Z" fill="#433d50"/><path d="M136 119v82" stroke="#a17a55" strokeWidth="4"/>
+      <rect x="25" y="88" width="20" height="36" fill="#354966"/><rect x="228" y="88" width="20" height="36" fill="#354966"/>
+      <rect x="124" y="-15" width="5" height="72" fill="#665a5b"/><path d="M129 -15h57l-12 22h-45Z" fill="#e6a657"/>
+    </g>
+    {/* Bridge supports and changing stone segments */}
+    <rect x="185" y="304" width="350" height="18" fill="#534c52" opacity=".55"/>
+    {stones.map(i => { const x=202+i*41; const active=i<built; return <g key={i}><rect x={x} y="275" width="38" height="34" fill={active?'#cda36d':'#8bb7c5'} opacity={active?1:.6} stroke={active?'#7d624d':'#d4eff0'} strokeWidth="3" strokeDasharray={active?'none':'5 5'}/>{active&&<><path d={`M${x+4} 284h30M${x+19} 284v20`} stroke="#efd3a0" strokeWidth="3"/><rect x={x+5} y="300" width="29" height="4" fill="#946f52"/></>}</g>; })}
+    {/* Flowers and stones */}
+    {[29,68,125,168,548,590,707,763].map((x,i)=><g key={x}><rect x={x} y={345+i%3*11} width="7" height="5" fill={i%2?'#ffe6a2':'#f6b8d2'}/><rect x={x+3} y={350+i%3*11} width="2" height="9" fill="#326e48"/></g>)}
+    {/* Full-body fox adventurer, with scarf, satchel, boots */}
+    <g transform={`translate(${finale?560:107} 243)`}>
+      <path d="M51 64 H60 V56 H69 V48 H77 V59 H80 V68 H70 V76 H59 V81 H51Z" fill="#b75c36" stroke="#7c4539" strokeWidth="3"/>
+      <rect x="21" y="64" width="17" height="29" fill="#334d78"/><rect x="42" y="64" width="17" height="29" fill="#334d78"/>
+      <rect x="18" y="86" width="22" height="11" fill="#523f46"/><rect x="40" y="86" width="23" height="11" fill="#523f46"/>
+      <rect x="14" y="34" width="50" height="36" fill="#436f9b" stroke="#2f4c6e" strokeWidth="4"/>
+      <rect x="8" y="42" width="10" height="27" fill="#d88b4e"/><rect x="61" y="42" width="10" height="27" fill="#d88b4e"/>
+      <path d="M12 34 V7 H18 V-10 H25 V-2 H33 V3 H47 V-2 H54 V-10 H60 V7 H65 V34Z" fill="#db8546" stroke="#995335" strokeWidth="4"/>
+      <path d="M19 23 H59 V30 H53 V35 H48 V38 H30 V35 H25 V30 H19Z" fill="#f7e5be"/>
+      <rect x="24" y="15" width="6" height="7" fill="#283d49"/><rect x="48" y="15" width="6" height="7" fill="#283d49"/><rect x="37" y="26" width="6" height="5" fill="#493c3d"/>
+      <path d="M17 36h45v10H17Z" fill="#c94656"/><path d="M48 43h10v20H48Z" fill="#c94656"/>
+      <rect x="51" y="52" width="17" height="15" fill="#a97948" stroke="#72583f" strokeWidth="3"/>
+    </g>
+    <rect x="17" y="15" width="267" height="38" fill="#1d3758" opacity=".88"/><text x="29" y="40" fill="#fff2d2" fontSize="20" fontWeight="bold">FRACTION FORTRESS</text>
+    <rect x="17" y="60" width="160" height="27" fill="#fff5df"/><text x="29" y="79" fill="#30465d" fontSize="15" fontWeight="bold">Bridge: {built} / 8</text>
+  </svg>;
+}
+
+export default function MockLesson() {
+  const [complexity, setComplexity] = useState<Complexity>('Moderate');
+  const [stage, setStage] = useState<Stage>('intro');
+  const [index, setIndex] = useState(0);
+  const [choice, setChoice] = useState('');
+  const [help, setHelp] = useState(false);
+  const [built, setBuilt] = useState(0);
+  const question = questions[index];
+  const reset = () => { setStage('intro'); setIndex(0); setChoice(''); setHelp(false); setBuilt(0); };
+  const next = () => { setChoice(''); setHelp(false); if (index < questions.length-1) { setIndex(index+1); setStage('challenge'); } else setStage('finale'); };
+  return <main style={{ maxWidth: 850, margin: '24px auto', padding: '16px', fontFamily: 'system-ui, sans-serif', color: '#22364d' }}>
+    <p style={{ fontSize: 12, fontWeight: 800, letterSpacing: 1.4 }}>STANDALONE DEMO · NO SAVED PROGRESS</p>
+    <h1 style={{ marginBottom: 8 }}>Fraction Fortress</h1>
+    <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap', marginBottom: 15 }}>
+      <label htmlFor="story-complexity" style={{ fontWeight: 700 }}>Story language</label>
+      <select id="story-complexity" value={complexity} onChange={e=>setComplexity(e.target.value as Complexity)} style={{ padding: '9px 12px', borderRadius: 8, border: '1px solid #7c8b9f', fontSize: 15 }}>
+        <option>Simple</option><option>Moderate</option><option>Rich</option>
+      </select>
+      <span style={{ fontSize: 13, color: '#53677d' }}>Same math questions in all modes</span>
+    </div>
+    <FortressScene built={built} finale={stage==='finale'}/>
+    <section style={{ background: '#f1f5f9', border: '1px solid #d5e0e9', borderRadius: 14, padding: 22, marginTop: 16 }}>
+      {stage==='intro' && <><h2>Your mission</h2><p>{story.intro[complexity]}</p><button style={buttonStyle} onClick={()=>setStage('refresher')}>Start mission →</button></>}
+      {stage==='refresher' && <><h2>Quick refresher</h2><p>{story.refresher[complexity]}</p><button style={buttonStyle} onClick={()=>setStage('challenge')}>Try a challenge →</button></>}
+      {stage==='challenge' && <><p style={{ fontWeight: 800, fontSize: 13 }}>CHALLENGE {index+1} OF {questions.length}</p><p style={{ lineHeight: 1.55, marginBottom: 8 }}>{challengeStory[index][complexity]}</p><h2>{question.prompt}</h2><div style={{ display:'flex', flexWrap:'wrap', gap:10 }}>{question.options.map(option=><button key={option} aria-pressed={choice===option} onClick={()=>setChoice(option)} style={{ ...buttonStyle, background:choice===option?'#d8e9ff':'#fff', borderColor:choice===option?'#2b68a2':'#627895' }}>{option} stones</button>)}</div><div style={{ display:'flex', flexWrap:'wrap', gap:10, marginTop:18 }}><button style={buttonStyle} onClick={()=>setHelp(!help)}>{help?'Hide hint':'Need a hint?'}</button><button style={{...buttonStyle, opacity:choice?1:.5}} disabled={!choice} onClick={()=>{setBuilt((index+1)*4);setStage('success');}}>Place bridge stones →</button></div>{help&&<p role="status" style={{ padding:12, background:'#fff3c9', borderRadius:8 }}>{question.hint}</p>}<p style={{fontSize:12,color:'#526477'}}>Preview only: any selected answer advances; no grading is performed.</p></>}
+      {stage==='success' && <><h2>Bridge progress!</h2><p>{story.success[complexity]}</p><button style={buttonStyle} onClick={next}>{index<questions.length-1?'Next challenge →':'Finish mission →'}</button></>}
+      {stage==='finale' && <><h2>🏆 Mission complete!</h2><p>{story.finale[complexity]}</p><button style={buttonStyle} onClick={reset}>Replay lesson ↺</button></>}
+    </section>
+  </main>;
+}

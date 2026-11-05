@@ -3,11 +3,19 @@ import uuid
 
 from backend.database.connection import get_connection
 
+# AI-ASSISTED UPDATE (2026-11-05)
+# Support existing seeded profile sections without changing
+# or deleting the original database records.
+# Include the profile section names used by our demo students.
+# Preserve existing section names for backward compatibility.
+# No database records are modified.
 
 PROFILE_SECTIONS = {
+    "program",
     "current_project",
     "interests",
     "strengths",
+    "challenges",
     "struggles",
     "supports",
     "notes",

@@ -42,19 +42,38 @@ def load_student_context(student_id: str):
         if student is None:
             return None
 
+        # AI-ASSISTED UPDATE (2026-11-05), ChatGPT
+        # Include pacing preferences in personalized story context. 
+        # Load student preferences, including break duration.
         preferences = conn.execute(
             """
-            SELECT interests, interests_text, learning_preferences_text,
-                   content_format, sensory_sensitive, help_mode
+            SELECT interests,
+                   interests_text,
+                   learning_preferences_text,
+                   content_format,
+                   sensory_sensitive,
+                   help_mode,
+                   break_minutes
             FROM student_preferences
             WHERE student_id = ?
             """,
             (student_id,),
         ).fetchone()
 
+    # AI-ASSISTED UPDATE (2026-11-05)
+    # Convert stored JSON interests into a structured list.
+    preferences_data = dict(preferences) if preferences else {}
+
+    try:
+        preferences_data["interests"] = json.loads(
+            preferences_data.get("interests") or "[]"
+        )
+    except (json.JSONDecodeError, TypeError):
+        preferences_data["interests"] = []
+
     return {
         "student": dict(student),
-        "preferences": dict(preferences) if preferences else {},
+        "preferences": preferences_data,
         "profile": get_profile(student_id),
     }
 
@@ -142,16 +161,25 @@ def generate_story_concepts(
         raise RuntimeError("Expected exactly three story concepts")
 
     required = {"id", "title", "premise", "story_goal", "learning_connection"}
-    if any(
-        not isinstance(concept, dict)
-        or any(
-            not isinstance(concept.get(key), str)
-            or not concept[key].strip()
-            for key in required
-        )
-        for concept in concepts
-    ):
-        raise RuntimeError("Story concepts have invalid fields")
+
+    # AI-ASSISTED UPDATE (2026-11-05)
+    # Identify which LLM-generated concept field failed validation.
+    # Preserve the existing validation requirements.
+
+    for index, concept in enumerate(concepts):
+        if not isinstance(concept, dict):
+            raise RuntimeError(
+                f"Concept {index + 1} is not a JSON object"
+            )
+
+        for key in required:
+            value = concept.get(key)
+
+            if not isinstance(value, str) or not value.strip():
+                raise RuntimeError(
+                    f"Concept {index + 1} has invalid field '{key}': "
+                    f"{value!r}"
+                )
 
     if len({concept["id"] for concept in concepts}) != 3:
         raise RuntimeError("Story concept IDs must be unique")
