@@ -6,11 +6,16 @@ from pydantic import BaseModel
 from backend.educator_loop.api import router as educator_router
 from backend.llm_query import query_llm
 from backend.avatar.router import router as avatar_router
+from backend.database.router import router as database_router
+
+from backend.lesson_generation.router import router as lesson_router
 
 app = FastAPI(title="Adaptive Classroom API")
 
 app.include_router(educator_router)
 app.include_router(avatar_router)
+app.include_router(database_router)
+app.include_router(lesson_router)
 
 app.add_middleware(
     CORSMiddleware,
