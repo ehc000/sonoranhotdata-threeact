@@ -158,7 +158,7 @@ def generate_story_sequence(
 
     # Preserve a legacy narrative alias until assembly.py is updated.
     # This keeps the existing teacher preview from breaking.
-     validated_segments = []
+    validated_segments = []
     for index, segment in enumerate(segments):
         for field in (
             "story_dialogue", "challenge_transition",
