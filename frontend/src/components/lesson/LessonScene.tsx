@@ -7,13 +7,15 @@ import LessonAvatarSprite, { type LessonAvatarChoice } from './LessonAvatarSprit
  * Adapted from the existing Fraction Fortress V3 mock SVG.
  * No image generation calls, network calls, persistence, or pet events.
  */
-import type { CSSProperties } from 'react';
 export type Complexity = 'Simple' | 'Moderate' | 'Rich';
 /** Detailed, deterministic SVG tile scene. Reuses the same scenery at every stage. */
 export default function LessonScene({ built, finale, complexity, avatar }: { built: number; finale: boolean; complexity: Complexity; avatar?: LessonAvatarChoice | null }) {
   const simple = complexity === 'Simple';
   const rich = complexity === 'Rich';
   const stones = Array.from({ length: 8 }, (_, i) => i);
+  const motionOff = avatar?.static_mode === true;
+  const progress = Math.max(0, Math.min(8, built));
+  const avatarX = finale ? 575 : progress === 0 ? 107 : 155 + progress * 46;
   return <svg viewBox="0 0 800 390" role="img" aria-label={`Pixel-art fantasy valley with a fox, river and castle. ${built} of 8 bridge sections restored.`} style={{ display: 'block', width: '100%', borderRadius: 4, imageRendering: 'pixelated', background: simple ? '#faf7f0' : '#dcebf3' }}>
     <defs>
       <pattern id="grassTile" width="40" height="40" patternUnits="userSpaceOnUse"><rect width="40" height="40" fill="#7bc46e"/><path d="M7 31v-7m4 6v-4m18-12v-6m4 6v-3" stroke="#4b9957" strokeWidth="2"/><rect x="17" y="33" width="4" height="4" fill="#e7d67b"/></pattern>
@@ -59,8 +61,13 @@ export default function LessonScene({ built, finale, complexity, avatar }: { bui
     {/* Flowers and stones */}
     {rich && [29,68,125,168,548,590,707,763].map((x,i)=><g key={x}><rect x={x} y={345+i%3*11} width="7" height="5" fill={i%2?'#ffe6a2':'#f6b8d2'}/><rect x={x+3} y={350+i%3*11} width="2" height="9" fill="#326e48"/></g>)}
           {/* Separate full-body avatar layer; bridge/castle/river are unchanged. */}
-      <g transform={`translate(${finale?560:107} 243)`}>
+      <g style={{ transform: `translate(${avatarX}px, 243px)`, transition: motionOff ? 'none' : 'transform 550ms ease-in-out' }}>
         <LessonAvatarSprite choice={avatar}/>
+        {finale && <g aria-label="Celebration sparkles">
+          {[[-17,0],[89,-14],[12,-25],[74,80]].map(([x,y],i)=><g key={i} transform={`translate(${x} ${y})`}>
+            <path d="M0 -9L3 -3L9 0L3 3L0 9L-3 3L-9 0L-3 -3Z" fill={i%2?'#fff0a3':'#f8a6c4'} stroke="#805b70" strokeWidth="1"/>
+          </g>)}
+        </g>}
       </g>
     <rect x="17" y="15" width="267" height="38" fill="#1d3758" opacity=".88"/><text x="29" y="40" fill="#fff2d2" fontSize="20" fontWeight="bold">FRACTION FORTRESS</text>
     <rect x="17" y="60" width="160" height="27" fill="#fff5df"/><text x="29" y="79" fill="#30465d" fontSize="15" fontWeight="bold">Bridge: {built} / 8</text>

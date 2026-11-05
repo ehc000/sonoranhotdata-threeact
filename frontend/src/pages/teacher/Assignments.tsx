@@ -263,6 +263,14 @@ export default function Assignments({
   const [studentId, setStudentId] = useState(
     selectedStudentId ?? students[0]?.id ?? ''
   );
+  // TEACHER_STUDENT_PIPELINE_DEMO_2026: The same selected student drives profile and lesson.
+  const selectedStudent = students.find(item => item.id === studentId);
+  const profile = selectedStudent as unknown as Record<string, unknown> | undefined;
+  const profileText = (key: string) => {
+    const v = profile?.[key];
+    if (Array.isArray(v)) return v.filter(x => typeof x === 'string').join(', ');
+    return typeof v === 'string' ? v : '';
+  };
   const [objective, setObjective] = useState('');
   const [teacherInstructions, setTeacherInstructions] = useState('');
 
@@ -605,6 +613,22 @@ export default function Assignments({
             </option>
           ))}
         </select>
+
+        {/* TEACHER_STUDENT_PIPELINE_DEMO_2026: Teacher sees the real selected record. */}
+        {selectedStudent && (
+          <section aria-label="Selected student profile" style={{border:'1px solid #cbd5e1', borderRadius:12, padding:16, margin:'14px 0 20px', background:'#f8fafc'}}>
+            <p className="eyebrow">SELECTED STUDENT PROFILE · TEACHER VIEW</p>
+            <h3 style={{margin:'4px 0 8px'}}>{selectedStudent.name}</h3>
+            {profileText('grade_level') && <p><strong>Grade:</strong> {profileText('grade_level')}</p>}
+            {profileText('interests') && <p><strong>Interests:</strong> {profileText('interests')}</p>}
+            {profileText('interests_text') && <p><strong>Interest notes:</strong> {profileText('interests_text')}</p>}
+            {profileText('learning_preferences') && <p><strong>Learning preferences:</strong> {profileText('learning_preferences')}</p>}
+            {profileText('learning_preferences_text') && <p><strong>Learning preferences:</strong> {profileText('learning_preferences_text')}</p>}
+            {profileText('strengths') && <p><strong>Strengths:</strong> {profileText('strengths')}</p>}
+            {profileText('supports') && <p><strong>Supports:</strong> {profileText('supports')}</p>}
+            <p className="muted small">This shows fields available in the teacher student list. Missing details are not invented. Existing teacher notes remain unchanged.</p>
+          </section>
+        )}
 
         {/* ------------------------------------------------------------
             AI-ASSISTED MODIFICATION: Competency before story generation.
@@ -960,10 +984,11 @@ export default function Assignments({
       {assembledLesson && (
         <section aria-label="Interactive lesson rendering" style={{ marginTop: 24 }}>
           <h2>Student-facing lesson rendering</h2>
+          <p><strong>Previewing as:</strong> {selectedStudent?.name ?? 'Selected student'}</p>
           <p className="muted small">
             Local rendering only. Simulated progress is not saved and no lesson is assigned.
           </p>
-          <LessonRenderer key={assembledLesson.lesson_id} lesson={toRenderableLesson(assembledLesson)} />
+          <LessonRenderer key={`${assembledLesson.lesson_id}:${studentId}`} lesson={toRenderableLesson(assembledLesson)} studentName={selectedStudent?.name} studentInterests={profileText('interests')} />
         </section>
       )}
 
