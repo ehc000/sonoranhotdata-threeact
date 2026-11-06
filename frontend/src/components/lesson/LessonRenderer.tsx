@@ -24,6 +24,19 @@ export type LessonQuestion = {
   visual_prompt?: string;
 };
 
+// App-owned manifest returned by POST /api/lesson-sequences/prepare.
+// Reference: FastAPI response models https://fastapi.tiangolo.com/tutorial/response-model/
+export type PreparedLessonSequence = {
+  lesson_id: string;
+  fingerprint: string;
+  scenes: Array<{
+    index: number;
+    description: string;
+    image_url: string;
+    animation: { action: string; effect: string; duration_ms: number };
+  }>;
+};
+
 export type RenderableLesson = {
   lesson_id: string;
   objective: string;
@@ -46,8 +59,8 @@ export type RenderableLesson = {
 // The future student player must use verified answers before recording progress.
 
 
-export default function LessonRenderer({lesson,studentName,studentInterests,studentId}:{
- lesson:RenderableLesson;studentName?:string;studentInterests?:string;studentId?:string
+export default function LessonRenderer({lesson,studentName,studentInterests,studentId,preparedSequence}:{
+ lesson:RenderableLesson;studentName?:string;studentInterests?:string;studentId?:string;preparedSequence?:PreparedLessonSequence|null
 }){
- return <TeacherLessonPlayer lesson={lesson} studentName={studentName} studentInterests={studentInterests} studentId={studentId}/>;
+ return <TeacherLessonPlayer lesson={lesson} studentName={studentName} studentInterests={studentInterests} studentId={studentId} preparedSequence={preparedSequence}/>;
 }

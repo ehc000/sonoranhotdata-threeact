@@ -26,7 +26,7 @@ import { useEffect, useState } from 'react';
 import type { ApiStudent } from '../../api/students';
 // AI-ASSISTED ADDITION (2026-11-05): Local mission rendering, without assignment or persistence.
 import LessonRenderer from '../../components/lesson/LessonRenderer';
-import type { RenderableLesson } from '../../components/lesson/LessonRenderer';
+import type { RenderableLesson, PreparedLessonSequence } from '../../components/lesson/LessonRenderer';
 
 type StoryConcept = {
   id: string;
@@ -274,6 +274,39 @@ export default function Assignments({
   const [objective, setObjective] = useState('');
   const [teacherInstructions, setTeacherInstructions] = useState('');
 
+    type StudentProfileSection = {
+    ai_summary: string;
+    teacher_notes: { note_text: string }[];
+    };
+
+    type StudentProfile = Record<string, StudentProfileSection>;
+
+    const [fullStudentProfile, setFullStudentProfile] =
+    useState<StudentProfile | null>(null);
+
+    useEffect(() => {
+    let active = true;
+    setFullStudentProfile(null);
+
+    if (!studentId) return;
+
+    fetch(`/api/students/${encodeURIComponent(studentId)}/profile`)
+        .then(response => {
+        if (!response.ok) throw new Error('Unable to load student profile');
+        return response.json();
+        })
+        .then((data: StudentProfile) => {
+        if (active) setFullStudentProfile(data);
+        })
+        .catch(error => {
+        console.error('Student profile loading failed:', error);
+        });
+
+    return () => {
+        active = false;
+    };
+}, [studentId]);
+
   // AI-ASSISTED ADDITION (2026-11-05): Teacher-controlled narrative language level.
   // Changes generated story wording only, not academic question difficulty.
   const [storyComplexity, setStoryComplexity] = useState<'simple' | 'moderate' | 'rich'>('simple');
@@ -294,6 +327,13 @@ export default function Assignments({
   // AI-assisted addition: Hold a teacher-only assembly preview in memory.
   const [assembledLesson, setAssembledLesson] = useState<AssembledLesson | null>(null);
   const [assembling, setAssembling] = useState(false);
+
+  // AI-assisted addition (2026-11-05): Prepare and save sequential artwork
+  // after teacher review, before playback. Design by project team.
+  // Reference: React useState https://react.dev/reference/react/useState
+  const [preparingAnimation, setPreparingAnimation] = useState(false);
+  const [animationMessage, setAnimationMessage] = useState<string | null>(null);
+  const [preparedSequence, setPreparedSequence] = useState<PreparedLessonSequence | null>(null);
   // AI-ASSISTED ADDITION: Keep assembly feedback next to its button.
   const [assemblyMessage, setAssemblyMessage] = useState<string | null>(null);
 
@@ -344,6 +384,8 @@ export default function Assignments({
     setError(null);
     setAssembledLesson(null);
     setAssemblyMessage(null);
+    setPreparedSequence(null);
+    setAnimationMessage(null);
   }
 
   /**
@@ -430,17 +472,59 @@ export default function Assignments({
     try {
       const student = students.find(item => item.id === studentId);
 
+      // Read the current student's full data at click time, rather than relying
+      // on a potentially empty/stale student-list entry or a pending useEffect.
+      const [detailResponse, profileResponse] = await Promise.all([
+        fetch(`/api/students/${encodeURIComponent(studentId)}`),
+        fetch(`/api/students/${encodeURIComponent(studentId)}/profile`),
+      ]);
+      const studentDetail: Record<string, unknown> = await readJson(detailResponse);
+      const studentProfile: StudentProfile = await readJson(profileResponse);
+      const detailPreferences = (
+        studentDetail.preferences && typeof studentDetail.preferences === 'object'
+          ? studentDetail.preferences : studentDetail
+      ) as Record<string, unknown>;
+      const asText = (value: unknown): string => {
+        if (typeof value === 'string') return value.trim();
+        if (Array.isArray(value)) return value.filter(v => typeof v === 'string').join(', ');
+        return '';
+      };
+      const sectionText = (section: string): string => {
+        const entry = studentProfile[section];
+        if (!entry) return '';
+        return [
+          asText(entry.ai_summary),
+          ...(entry.teacher_notes ?? []).map(note => asText(note.note_text)),
+        ].filter(Boolean).join('; ');
+      };
+      const interests = [
+        asText(detailPreferences.interests_text),
+        asText(detailPreferences.interests),
+        sectionText('interests'),
+      ].filter(Boolean).join('; ');
+      // Keep the demo/test-story path usable when a newly seeded student has
+      // no interests. In that case the theme is the story, not a student claim.
+      const questionTheme = interests || selectedConcept.title;
+      const learningContext = ['strengths', 'challenges', 'struggles', 'supports', 'notes']
+        .map(section => {
+          const content = sectionText(section);
+          return content ? `${section}: ${content}` : '';
+        }).filter(Boolean).join('\n');
+
       const response = await fetch('/api/preps', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           student: student?.name || studentId,
-          interest: selectedConcept.title,
+
+          interest: questionTheme,
           competencies: [competencyId],
           educator_prompt: [
             `Learning objective: ${objective.trim()}`,
             teacherInstructions.trim(),
             `Story premise: ${selectedConcept.premise}`,
+            `Use the student's interests in the actual question wording while preserving the original mathematics and answer. Interests: ${questionTheme}`,
+            learningContext ? `Student learning context (adapt wording and supports, do not change the academic competency):\n${learningContext}` : '', 
           ]
             .filter(Boolean)
             .join('\n'),
@@ -548,6 +632,8 @@ export default function Assignments({
     setAssemblyMessage('Assembling lesson. Waiting for the story sequence...');
     setError(null);
     setAssembledLesson(null);
+    setPreparedSequence(null);
+    setAnimationMessage(null);
     try {
       const response = await fetch('/api/lessons/assemble', {
         method: 'POST',
@@ -578,6 +664,71 @@ export default function Assignments({
       setAssemblyMessage(err instanceof Error ? err.message : 'Unable to assemble lesson');
     } finally {
       setAssembling(false);
+    }
+  }
+
+  // AI-assisted addition (2026-11-05): Select an MVP animation from scene verbs.
+  // Design heuristic; not an externally sourced animation taxonomy.
+  function inferSceneAction(description: string): string {
+    const value = description.toLowerCase();
+    if (/mine|dig|pickaxe|ore/.test(value)) return 'mine';
+    if (/collect|gather|inventory|pick up/.test(value)) return 'collect';
+    if (/build|construct|place block|bridge/.test(value)) return 'build';
+    if (/walk|travel|cross|move/.test(value)) return 'walk';
+    if (/open|chest|treasure/.test(value)) return 'open';
+    return 'reveal';
+  }
+
+  // AI-assisted addition: Generate scene images in order using the backend.
+  // Reference: Fetch API https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API
+  // No grading, lesson assignment, or student-progress persistence occurs here.
+  async function prepareAnimatedLesson() {
+    if (!assembledLesson || preparingAnimation) return;
+    setPreparingAnimation(true);
+    setAnimationMessage('Preparing sequential story scenes...');
+    setPreparedSequence(null);
+    try {
+      const questions = assembledLesson.activities.flatMap(activity => activity.questions);
+      const scenes = [
+        {
+          description: assembledLesson.introduction_visual_prompt || assembledLesson.introduction,
+          action: 'reveal',
+        },
+        ...questions.map(question => {
+          const description = question.visual_prompt || question.narrative || question.text;
+          return {
+            description,
+            action: inferSceneAction([
+              question.visual_prompt,
+              question.narrative,
+              question.story_dialogue,
+              question.challenge_transition,
+            ].filter(Boolean).join(' ')),
+          };
+        }),
+        {
+          description: assembledLesson.conclusion_visual_prompt || assembledLesson.conclusion,
+          action: 'reveal',
+        },
+      ];
+      const response = await fetch('/api/lesson-sequences/prepare', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          lesson_id: assembledLesson.lesson_id,
+          story_title: assembledLesson.story.title,
+          setting: [assembledLesson.story.premise, assembledLesson.story.story_goal]
+            .filter(Boolean).join('. '),
+          scenes,
+        }),
+      });
+      const data = await readJson(response);
+      setPreparedSequence(data);
+      setAnimationMessage(`Prepared ${data.scenes.length} saved scenes.`);
+    } catch (err) {
+      setAnimationMessage(err instanceof Error ? err.message : 'Unable to prepare scenes');
+    } finally {
+      setPreparingAnimation(false);
     }
   }
 
@@ -620,7 +771,7 @@ export default function Assignments({
             <p className="eyebrow">SELECTED STUDENT PROFILE · TEACHER VIEW</p>
             <h3 style={{margin:'4px 0 8px'}}>{selectedStudent.name}</h3>
             {profileText('grade_level') && <p><strong>Grade:</strong> {profileText('grade_level')}</p>}
-            {profileText('interests') && <p><strong>Interests:</strong> {profileText('interests')}</p>}
+            {(fullStudentProfile?.interests?.ai_summary || profileText('interests')) && <p><strong>Interests:</strong> {fullStudentProfile?.interests?.ai_summary || profileText('interests')}</p>}
             {profileText('interests_text') && <p><strong>Interest notes:</strong> {profileText('interests_text')}</p>}
             {profileText('learning_preferences') && <p><strong>Learning preferences:</strong> {profileText('learning_preferences')}</p>}
             {profileText('learning_preferences_text') && <p><strong>Learning preferences:</strong> {profileText('learning_preferences_text')}</p>}
@@ -981,6 +1132,45 @@ export default function Assignments({
       */}
       {/* AI-ASSISTED ADDITION (2026-11-05): Interactive local rendering of
           the assembled lesson. The existing detailed teacher preview remains below. */}
+      {/* AI-assisted addition: Explicit teacher action; this makes paid image API calls. */}
+      {assembledLesson && (
+        <div className="card" style={{ marginTop: 24 }}>
+          <h2>Prepare animated lesson</h2>
+          <p className="muted small">
+            Generate and save connected scene illustrations for this reviewed lesson.
+            The student player is not connected to these saved scenes yet.
+          </p>
+          <button
+            type="button"
+            className="btn primary"
+            disabled={preparingAnimation}
+            onClick={prepareAnimatedLesson}
+          >
+            {preparingAnimation ? 'Preparing animated lesson...' : 'Prepare Animated Lesson'}
+          </button>
+          {animationMessage && <p role="status" aria-live="polite">{animationMessage}</p>}
+          {preparedSequence && (
+            <div>
+              <p>{preparedSequence.scenes.length} scenes saved for future playback.</p>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 12 }}>
+                {preparedSequence.scenes.map(scene => (
+                  <figure key={scene.index} style={{ margin: 0 }}>
+                    <img
+                      src={scene.image_url}
+                      alt={`Prepared story scene ${scene.index + 1}`}
+                      style={{ width: '100%', borderRadius: 8 }}
+                    />
+                    <figcaption className="muted small">
+                      Scene {scene.index + 1} · {scene.animation.action}
+                    </figcaption>
+                  </figure>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
       {assembledLesson && (
         <section aria-label="Interactive lesson rendering" style={{ marginTop: 24 }}>
           <h2>Student-facing lesson rendering</h2>
@@ -988,7 +1178,7 @@ export default function Assignments({
           <p className="muted small">
             Local rendering only. Simulated progress is not saved and no lesson is assigned.
           </p>
-          <LessonRenderer key={`${assembledLesson.lesson_id}:${studentId}`} lesson={toRenderableLesson(assembledLesson)} studentName={selectedStudent?.name} studentInterests={profileText('interests')} studentId={studentId} />
+          <LessonRenderer key={`${assembledLesson.lesson_id}:${studentId}`} lesson={toRenderableLesson(assembledLesson)} studentName={selectedStudent?.name} studentInterests={profileText('interests')} studentId={studentId} preparedSequence={preparedSequence?.lesson_id === assembledLesson.lesson_id ? preparedSequence : null} />
         </section>
       )}
 

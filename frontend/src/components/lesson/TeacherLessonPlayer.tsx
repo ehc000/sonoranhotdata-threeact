@@ -5,11 +5,10 @@
  */
 import { useEffect, useState } from 'react';
 import LessonAvatarSprite from './LessonAvatarSprite';
-import { useScenePair } from './useScenePair';
 import type { LessonAvatarChoice } from './LessonAvatarSprite';
-import type { RenderableLesson } from './LessonRenderer';
+import type { RenderableLesson, PreparedLessonSequence } from './LessonRenderer';
 
-type Props = { lesson: RenderableLesson; studentName?: string; studentInterests?: string; studentId?: string };
+type Props = { lesson: RenderableLesson; studentName?: string; studentInterests?: string; studentId?: string; preparedSequence?: PreparedLessonSequence | null };
 type Phase = 'intro'|'refresher'|'question'|'success'|'finale';
 const button: React.CSSProperties={padding:'11px 16px',borderRadius:9,border:'2px solid #687a95',background:'#fff',color:'#27364b',fontWeight:700,cursor:'pointer'};
 function sceneKind(lesson:RenderableLesson):'mine'|'space'|'forest'|'castle'{
@@ -37,7 +36,7 @@ function Background({kind,progress,finale,avatar,imageUrl,hideAvatar}: {kind:Ret
    {finale&&<g fill="#ffe4a2">{Array.from({length:8},(_,i)=><path key={i} transform={`translate(${180+i*65} ${75+(i%3)*35})`} d="M0 -10L3 -3L10 0L3 3L0 10L-3 3L-10 0L-3 -3Z"/>)}</g>}
  </svg>;
 }
-export default function TeacherLessonPlayer({lesson,studentName}:Props){
+export default function TeacherLessonPlayer({lesson,studentName,preparedSequence}:Props){
  const questions=lesson.activities.flatMap(a=>a.questions);
  const [phase,setPhase]=useState<Phase>('intro');
  const [index,setIndex]=useState(0);
@@ -48,22 +47,57 @@ export default function TeacherLessonPlayer({lesson,studentName}:Props){
  useEffect(()=>{setPhase('intro');setIndex(0);setShowHelp(false)},[lesson.lesson_id]);
  const q=questions[index];
  const kind=sceneKind(lesson);
- const scenePair=useScenePair(lesson,phase,index);
- const showAfter=phase==='success'||phase==='finale';
+ // AI-assisted: Select ONLY saved images; never invoke image generation in playback.
+ // The opening frame is 0; completed challenge N is frame N+1.
+ // During a question, retain the last completed frame until success.
+ const frame = phase === 'finale' ? questions.length + 1
+   : phase === 'success' ? index + 1
+   : phase === 'question' ? index
+   : 0;
+ const scene = preparedSequence?.lesson_id === lesson.lesson_id
+   ? preparedSequence.scenes[frame] : undefined;
+ const sceneUrl = scene?.image_url ?? null;
+ const motion = phase === 'success' ? scene?.animation.action : undefined;
+ const effect = phase === 'success' ? scene?.animation.effect : undefined;
  const completed=phase==='finale'?questions.length:index+(phase==='success'?1:0);
  const next=()=>{setShowHelp(false);if(index+1<questions.length){setIndex(i=>i+1);setPhase('question')}else setPhase('finale')};
  return <section aria-label="Interactive student lesson preview" style={{maxWidth:850,margin:'16px auto',color:'#26364c'}}>
    <p style={{fontSize:12,fontWeight:800,letterSpacing:1.3,color:'#8a4961'}}>TEACHER PREVIEW · STUDENT EXPERIENCE</p>
    <h2 style={{margin:'0 0 6px'}}>{lesson.mission?.title||lesson.story?.title||'Your mission'}</h2>
    <p style={{fontSize:13,color:'#64748b'}}>Previewing as {studentName||'student'} · No answers graded or saved</p>
-   <div style={{position:'relative',width:'100%',overflow:'hidden',borderRadius:12}}>
-     <Background kind={kind} progress={questions.length?completed/questions.length:0} finale={phase==='finale'} avatar={avatar} imageUrl={null} hideAvatar={Boolean(scenePair.before)}/>
-     {scenePair.before&&<img alt="Illustrated scene before the challenge" src={scenePair.before} style={{position:'absolute',inset:0,width:'100%',height:'100%',objectFit:'cover',opacity:showAfter&&scenePair.after?0:1,transition:'opacity 650ms ease',transform:showAfter?'scale(1.015)':'scale(1)',imageRendering:'pixelated'}}/>}
-     {scenePair.after&&<img alt="Illustrated scene after completing the challenge" src={scenePair.after} style={{position:'absolute',inset:0,width:'100%',height:'100%',objectFit:'cover',opacity:showAfter?1:0,transition:'opacity 650ms ease',transform:showAfter?'scale(1.025)':'scale(1)',imageRendering:'pixelated'}}/>}
-     {showAfter&&scenePair.after&&<span aria-hidden="true" style={{position:'absolute',top:'12%',right:'18%',fontSize:30,animation:'scene-pair-pop 650ms ease'}}>✨</span>}
-   </div>
-   <style>{`@keyframes scene-pair-pop {from {opacity:0;transform:scale(.4) rotate(-15deg)} to {opacity:1;transform:scale(1) rotate(0)}} @media (prefers-reduced-motion: reduce) {img {transition:none!important;transform:none!important}}`}</style>
-   <p style={{fontSize:12,color:'#64748b'}}>{scenePair.loading?'Preparing illustrated story frames…':scenePair.error?'Image unavailable; showing playable fallback':'Illustrated before/after scene'}</p>
+    <div style={{position:'relative',width:'100%',overflow:'hidden',borderRadius:12,aspectRatio:'800 / 360',background:'#dcebf3'}}>
+      <Background kind={kind} progress={questions.length?completed/questions.length:0} finale={phase==='finale'} avatar={avatar} imageUrl={sceneUrl} hideAvatar={Boolean(sceneUrl)}/>
+     
+          {sceneUrl && (
+      <img
+        key={sceneUrl}
+        src={sceneUrl}
+        alt={scene?.description || 'Prepared illustrated lesson scene'}
+        style={{
+          position: 'absolute',
+          inset: 0,
+          width: '100%',
+          height: '100%',
+          objectFit: 'cover',
+          imageRendering: 'pixelated',
+        }}
+      />
+    )}
+
+      {motion && <div key={`${index}-${phase}`} aria-hidden="true" className={`lesson-action lesson-action-${motion}`} style={{position:'absolute',left:'46%',top:'42%',fontSize:42,pointerEvents:'none'}}>{motion==='pickaxe_swing'?'⛏️':motion==='pickup'?'📦':motion==='place_blocks'?'🧱':motion==='walk'?'🚶':motion==='open_chest'?'🗝️':'✨'}</div>}
+      {effect && effect !== 'none' && <div key={`effect-${index}-${phase}`} aria-hidden="true" className="lesson-effect" style={{position:'absolute',left:'58%',top:'27%',fontSize:34,pointerEvents:'none'}}>{effect==='ore_sparkles'?'💎':effect==='inventory_glow'?'🎒':effect==='construction_sparkles'?'✨':effect==='treasure_glow'?'🌟':'✨'}</div>}
+    </div>
+    <style>{`
+      @keyframes lesson-swing {0%{transform:rotate(-35deg)}50%{transform:rotate(45deg)}100%{transform:rotate(0)}}
+      @keyframes lesson-rise {0%{opacity:0;transform:translateY(24px) scale(.6)}50%{opacity:1}100%{opacity:1;transform:translateY(0) scale(1)}}
+      @keyframes lesson-walk {from{transform:translateX(-45px)}to{transform:translateX(40px)}}
+      .lesson-action-pickaxe_swing,.lesson-action-open_chest{animation:lesson-swing 900ms ease-in-out both;transform-origin:bottom center}
+      .lesson-action-pickup,.lesson-action-place_blocks,.lesson-action-reveal{animation:lesson-rise 900ms ease-out both}
+      .lesson-action-walk{animation:lesson-walk 1100ms ease-in-out both}
+      .lesson-effect{animation:lesson-rise 1100ms ease-out both}
+      @media (prefers-reduced-motion:reduce){.lesson-action,.lesson-effect{animation:none!important}}
+    `}</style>
+    <p style={{fontSize:12,color:'#64748b'}}>{sceneUrl?'Saved illustration · no image generation during playback':'Illustrated fallback · prepare the lesson to use saved scenes'}</p>
    <div style={{background:'#f0f5f9',border:'1px solid #cbd9e3',borderRadius:12,padding:20,marginTop:12}}>
     <p style={{fontSize:13,fontWeight:700}}>{completed} / {questions.length} mission steps completed</p>
     <progress value={completed} max={Math.max(1,questions.length)} style={{width:'100%'}}/>
