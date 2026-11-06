@@ -1,0 +1,238 @@
+
+"""
+Sequential lesson artwork preparation.
+
+Generates a complete sequence of illustrated scenes BEFORE gameplay.
+Each new frame uses the preceding frame as its image reference.
+
+References:
+- OpenAI Images API: https://platform.openai.com/docs/guides/image-generation
+- FastAPI routing: https://fastapi.tiangolo.com/tutorial/bigger-applications/
+
+Design note:
+The sequential chaining and animation manifest are our application
+architecture, not requirements imposed by either external API.
+"""
+
+import base64
+import hashlib
+import json
+import os
+import re
+from pathlib import Path
+
+import httpx
+from fastapi import APIRouter, HTTPException
+from fastapi.responses import FileResponse
+from pydantic import BaseModel, Field
+
+router = APIRouter(
+    prefix="/api/lesson-sequences",
+    tags=["lesson-sequences"],
+)
+
+# Keep generated assets out of the frontend source tree.
+ASSET_ROOT = Path(__file__).resolve().parent / "generated_lesson_assets"
+STYLE_REFERENCE = (
+    Path(__file__).resolve().parent
+    / "assets"
+    / "lesson_style_reference.png"
+)
+
+
+class SceneInstruction(BaseModel):
+    description: str = Field(min_length=1, max_length=2500)
+    action: str = Field(default="reveal", max_length=50)
+
+
+class PrepareLessonRequest(BaseModel):
+    lesson_id: str = Field(min_length=1, max_length=200)
+    story_title: str = Field(max_length=300)
+    setting: str = Field(max_length=1500)
+    scenes: list[SceneInstruction] = Field(min_length=1, max_length=30)
+
+
+def safe_lesson_id(value: str) -> str:
+    """Create a filesystem-safe lesson directory identifier."""
+    slug = re.sub(r"[^a-zA-Z0-9_-]", "_", value)[:50]
+    digest = hashlib.sha256(value.encode()).hexdigest()[:12]
+    return f"{slug}_{digest}"
+
+
+def animation_for(action: str) -> dict:
+    """Translate lesson actions into frontend animation instructions."""
+    animations = {
+        "mine": ("pickaxe_swing", "ore_sparkles"),
+        "collect": ("pickup", "inventory_glow"),
+        "build": ("place_blocks", "construction_sparkles"),
+        "walk": ("walk", "none"),
+        "open": ("open_chest", "treasure_glow"),
+    }
+
+    motion, effect = animations.get(action, ("reveal", "sparkles"))
+
+    return {
+        "action": motion,
+        "effect": effect,
+        "duration_ms": 1100,
+    }
+
+
+async def edit_scene(
+    client: httpx.AsyncClient,
+    reference: bytes,
+    prompt: str,
+    api_key: str,
+    model: str,
+) -> bytes:
+    """Generate a new frame by editing the previous frame."""
+    response = await client.post(
+        "https://api.openai.com/v1/images/edits",
+        headers={"Authorization": f"Bearer {api_key}"},
+        data={
+            "model": model,
+            "prompt": prompt,
+            "size": "1536x1024",
+        },
+        files={
+            "image": ("reference.png", reference, "image/png"),
+        },
+    )
+
+    if response.status_code >= 400:
+        raise HTTPException(
+            502,
+            f"Image generation failed (HTTP {response.status_code})",
+        )
+
+    try:
+        return base64.b64decode(
+            response.json()["data"][0]["b64_json"],
+            validate=True,
+        )
+    except (ValueError, KeyError, IndexError) as exc:
+        raise HTTPException(
+            502, "Unexpected image-generation response"
+        ) from exc
+
+
+@router.post("/prepare")
+async def prepare_lesson(req: PrepareLessonRequest):
+    """
+    Generate all scenes in order.
+
+    Scene 0 starts from the style reference.
+    Scene N starts from Scene N-1's completed image.
+    The resulting files are saved for future playback.
+    """
+    api_key = os.getenv("OPENAI_API_KEY")
+    if not api_key:
+        raise HTTPException(503, "OPENAI_API_KEY not configured")
+
+    if not STYLE_REFERENCE.is_file():
+        raise HTTPException(503, "Lesson style reference is missing")
+
+    model = os.getenv("SCENE_IMAGE_MODEL", "gpt-image-1.5")
+    lesson_dir = ASSET_ROOT / safe_lesson_id(req.lesson_id)
+    lesson_dir.mkdir(parents=True, exist_ok=True)
+
+    # Content-based key prevents an old lesson from being mistaken
+    # for a newly edited lesson with the same ID.
+    content = req.model_dump()
+    content["model"] = model
+    fingerprint = hashlib.sha256(
+        json.dumps(content, sort_keys=True).encode()
+    ).hexdigest()
+
+    manifest_path = lesson_dir / "manifest.json"
+
+    # Reuse fully prepared lessons without making more paid API calls.
+    if manifest_path.exists():
+        manifest = json.loads(manifest_path.read_text())
+        if (
+            manifest.get("fingerprint") == fingerprint
+            and all(
+                (lesson_dir / f"scene_{i:03d}.png").is_file()
+                for i in range(len(req.scenes))
+            )
+        ):
+            return manifest
+
+    previous_image = STYLE_REFERENCE.read_bytes()
+    prepared_scenes = []
+
+    async with httpx.AsyncClient(timeout=180) as client:
+        for index, scene in enumerate(req.scenes):
+            # Our continuity rule: never regenerate from the original
+            # style sheet after the first frame.
+            prompt = f"""
+Create the next frame in one continuous original pixel-art story.
+
+Story: {req.story_title}
+World: {req.setting}
+Scene: {index + 1} of {len(req.scenes)}
+Event: {scene.description}
+Character action: {scene.action}
+
+Use the supplied image as the previous completed world state.
+Preserve the protagonist, camera, architecture, landmarks, palette,
+and all previously completed changes.
+
+Only change objects required by this scene's event.
+Do not reset completed actions or duplicate the protagonist.
+No text, labels, equations, or UI elements.
+Landscape composition with consistent pixel-art style.
+"""
+
+            try:
+                image_bytes = await edit_scene(
+                    client, previous_image, prompt, api_key, model
+                )
+            except httpx.HTTPError as exc:
+                raise HTTPException(
+                    502, f"Scene {index + 1} generation failed"
+                ) from exc
+
+            filename = f"scene_{index:03d}.png"
+            (lesson_dir / filename).write_bytes(image_bytes)
+
+            prepared_scenes.append({
+                "index": index,
+                "description": scene.description,
+                "image_url": (
+                    f"/api/lesson-sequences/assets/"
+                    f"{safe_lesson_id(req.lesson_id)}/{filename}"
+                ),
+                "animation": animation_for(scene.action),
+            })
+
+            # Critical: the next image references this completed frame.
+            previous_image = image_bytes
+
+    manifest = {
+        "lesson_id": req.lesson_id,
+        "fingerprint": fingerprint,
+        "scenes": prepared_scenes,
+    }
+
+    # Save manifest last so incomplete generation is never marked ready.
+    temporary = manifest_path.with_suffix(".tmp")
+    temporary.write_text(json.dumps(manifest, indent=2))
+    temporary.replace(manifest_path)
+
+    return manifest
+
+
+@router.get("/assets/{lesson_folder}/{filename}")
+def get_lesson_asset(lesson_folder: str, filename: str):
+    """Serve only generated PNG files from the expected directory."""
+    if not re.fullmatch(r"[A-Za-z0-9_-]+", lesson_folder):
+        raise HTTPException(400, "Invalid lesson folder")
+    if not re.fullmatch(r"scene_[0-9]{3}\.png", filename):
+        raise HTTPException(400, "Invalid image filename")
+
+    path = ASSET_ROOT / lesson_folder / filename
+    if not path.is_file():
+        raise HTTPException(404, "Scene image not found")
+
+    return FileResponse(path, media_type="image/png")

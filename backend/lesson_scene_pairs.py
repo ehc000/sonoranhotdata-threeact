@@ -41,8 +41,20 @@ async def generate(req: ScenePairRequest):
         CACHE.move_to_end(sig)
         return Response(CACHE[sig], media_type="image/png")
     # After frame is edited from the *actual before image* whenever it exists.
+
+    # Edited this portion to allow sequential lesson image generation.
     before_key = signature(req, "before") + ":" + model
-    prior = CACHE.get(before_key) if req.phase == "after" else None
+
+    if req.phase == "after":
+        prior = CACHE.get(before_key)
+    else:
+        prior = None
+        if req.scene_number > 0:
+            for cached_key, cached_image in reversed(list(CACHE.items())):
+                if cached_key.startswith(f"{req.lesson_id}:scene:{req.scene_number - 1}:after:"):
+                    prior = cached_image
+                    break
+
     if prior is None and not STYLE.exists():
         raise HTTPException(503, "Missing backend/assets/lesson_style_reference.png")
     reference = prior if prior is not None else STYLE.read_bytes()

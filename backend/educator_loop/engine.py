@@ -207,8 +207,35 @@ def check_rewrap(q, text):
 
 
 def _mock_rewrap(q, interest):
-    """MOCK: offline stand-in for the rewrap call; prefixes the interest, changes nothing else."""
-    return f"({interest} version) {q['prompt']}" if interest else q["prompt"]
+    """Offline/demo rewrap: meaningful themed context, not a label prefix.
+
+    Preserve the exact academic expression and all numbers so the existing
+    answer key and question-validation rules remain unchanged.
+    """
+    original = q["prompt"].strip()
+    theme = interest.strip() or "an adventure"
+    # For short computation prompts, make the mathematics an actual task in
+    # the student's chosen story instead of saying '(theme version)'.
+    match = re.match(r"^(?:What is|Evaluate|Simplify)\s+(.+?)[?.]?$", original, re.I)
+    if match:
+        expression = match.group(1).rstrip("?. ")
+        lower = theme.lower()
+        if any(word in lower for word in ("minecraft", "fortress", "block", "building")):
+            return (f"While building your Minecraft fortress, the resource counter "
+                    f"shows the calculation {expression}. Work out {expression} "
+                    f"to find the correct counter value before placing the next block.")
+        if any(word in lower for word in ("game", "gaming", "coding", "app")):
+            return (f"You're programming a game inspired by {theme}. The score "
+                    f"system must calculate {expression}. What result should "
+                    f"the game display for {expression}?")
+        if any(word in lower for word in ("music", "video", "youtube")):
+            return (f"You're organizing a creative media project about {theme}. "
+                    f"A tracking screen needs the result of {expression}. "
+                    f"Calculate {expression} to update the screen.")
+        return (f"In your {theme} adventure, a challenge panel displays "
+                f"{expression}. Solve {expression} to unlock the next step.")
+    # Already contextualized word problems retain all original facts/units.
+    return (f"During your {theme} adventure, solve this challenge: {original}")
 
 
 def rewrap_questions(questions, interest):

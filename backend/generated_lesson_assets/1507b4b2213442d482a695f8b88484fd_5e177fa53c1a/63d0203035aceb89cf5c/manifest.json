@@ -1,0 +1,126 @@
+{
+  "lesson_id": "1507b4b2213442d482a695f8b88484fd",
+  "fingerprint": "63d0203035aceb89cf5c8334b908b1ebe3e114f92e2ae93521632cd866fb5cb5",
+  "scenes": [
+    {
+      "index": 0,
+      "description": "Demo Student D stands at the start of Integer Island, a lush green island shaped like a number line. The sky is clear, and a wooden trap gate blocks the path ahead. Cozy pixel art style with low visual density and consistent background and character.",
+      "image_url": "/api/lesson-sequences/assets/1507b4b2213442d482a695f8b88484fd_5e177fa53c1a/63d0203035aceb89cf5c/scene_000.png",
+      "animation": {
+        "action": "reveal",
+        "effect": "none",
+        "duration_ms": 650
+      }
+    },
+    {
+      "index": 1,
+      "description": "BEFORE CHALLENGE: Demo Student D standing before a wooden trap gate at the island's edge, number line shaped island background, cozy pixel art, low visual density.. Demo Student D standing before a wooden trap gate at the island's edge, number line shaped island background, cozy pixel art, low visual density.. This trap blocks the way. I need to find -2 plus 3 to open it. Can you help me solve this to pass the trap?. To pass the trap at the island's edge, solve: What is -2 + 3?. Show the obstacle or learning objects BEFORE the action; leave the task visibly incomplete.",
+      "image_url": "/api/lesson-sequences/assets/1507b4b2213442d482a695f8b88484fd_5e177fa53c1a/63d0203035aceb89cf5c/scene_001.png",
+      "animation": {
+        "action": "reveal",
+        "effect": "none",
+        "duration_ms": 650
+      }
+    },
+    {
+      "index": 2,
+      "description": "AFTER CHALLENGE: Demo Student D walking through the opened trap gate, path leading to a stone secret door visible ahead, same setting and style.. The trap gate swings open, and Demo Student D steps forward toward a stone secret door.. Demo Student D is ready to face the first trap after the refresher.. Can you help me solve this to pass the trap?. Show the SAME location with the obstacle visibly changed/completed; retain all earlier world changes.",
+      "image_url": "/api/lesson-sequences/assets/1507b4b2213442d482a695f8b88484fd_5e177fa53c1a/63d0203035aceb89cf5c/scene_002.png",
+      "animation": {
+        "action": "pickaxe_swing",
+        "effect": "none",
+        "duration_ms": 650
+      }
+    },
+    {
+      "index": 3,
+      "description": "BEFORE CHALLENGE: Demo Student D standing before a large stone secret door with carved numbers, island background consistent, cozy pixel art.. Demo Student D standing before a large stone secret door with carved numbers, island background consistent, cozy pixel art.. This secret door needs the sum of -8 and 21 to open. Let's figure it out. Can you help me unlock the secret door?. To open the secret door, solve: What is -8 + 21?. Show the obstacle or learning objects BEFORE the action; leave the task visibly incomplete.",
+      "image_url": "/api/lesson-sequences/assets/1507b4b2213442d482a695f8b88484fd_5e177fa53c1a/63d0203035aceb89cf5c/scene_003.png",
+      "animation": {
+        "action": "reveal",
+        "effect": "none",
+        "duration_ms": 650
+      }
+    },
+    {
+      "index": 4,
+      "description": "AFTER CHALLENGE: Demo Student D stepping through the opened secret door, a river crossing visible ahead, same style and setting.. The secret door swings open, revealing a river crossing beyond.. The trap is open. Now Demo Student D sees a secret door ahead.. Can you help me unlock the secret door?. Show the SAME location with the obstacle visibly changed/completed; retain all earlier world changes.",
+      "image_url": "/api/lesson-sequences/assets/1507b4b2213442d482a695f8b88484fd_5e177fa53c1a/63d0203035aceb89cf5c/scene_004.png",
+      "animation": {
+        "action": "pickaxe_swing",
+        "effect": "none",
+        "duration_ms": 650
+      }
+    },
+    {
+      "index": 5,
+      "description": "BEFORE CHALLENGE: Demo Student D at the riverbank looking at a broken bridge, cozy pixel art, consistent background and character.. Demo Student D at the riverbank looking at a broken bridge, cozy pixel art, consistent background and character.. To fix the crossing, I need to solve -15 plus 4. That should help. Can you help me repair the bridge?. While crossing the river, solve: What is -15 + 4?. Show the obstacle or learning objects BEFORE the action; leave the task visibly incomplete.",
+      "image_url": "/api/lesson-sequences/assets/1507b4b2213442d482a695f8b88484fd_5e177fa53c1a/63d0203035aceb89cf5c/scene_005.png",
+      "animation": {
+        "action": "reveal",
+        "effect": "none",
+        "duration_ms": 650
+      }
+    },
+    {
+      "index": 6,
+      "description": "AFTER CHALLENGE: Demo Student D crossing a newly repaired wooden bridge over the river, same setting and style.. A sturdy wooden bridge appears, and Demo Student D crosses safely.. With the door open, Demo Student D reaches the riverbank but the bridge is broken.. Can you help me repair the bridge?. Show the SAME location with the obstacle visibly changed/completed; retain all earlier world changes.",
+      "image_url": "/api/lesson-sequences/assets/1507b4b2213442d482a695f8b88484fd_5e177fa53c1a/63d0203035aceb89cf5c/scene_006.png",
+      "animation": {
+        "action": "place_blocks",
+        "effect": "none",
+        "duration_ms": 650
+      }
+    },
+    {
+      "index": 7,
+      "description": "BEFORE CHALLENGE: Demo Student D examining a stone wall with ancient number carvings, cozy pixel art, consistent character and background.. Demo Student D examining a stone wall with ancient number carvings, cozy pixel art, consistent character and background.. To decode this inscription, I must solve 14 minus 13. Let's see what it reveals. Can you help me decode the inscription?. To decode the ancient temple inscription, solve: What is 14 - 13?. Show the obstacle or learning objects BEFORE the action; leave the task visibly incomplete.",
+      "image_url": "/api/lesson-sequences/assets/1507b4b2213442d482a695f8b88484fd_5e177fa53c1a/63d0203035aceb89cf5c/scene_007.png",
+      "animation": {
+        "action": "reveal",
+        "effect": "none",
+        "duration_ms": 650
+      }
+    },
+    {
+      "index": 8,
+      "description": "AFTER CHALLENGE: Demo Student D standing before a revealed hidden path behind the decoded inscription, same style and setting.. The hidden path behind the inscription is revealed.. After crossing the river, Demo Student D finds an ancient stone wall with carvings.. Can you help me decode the inscription?. Show the SAME location with the obstacle visibly changed/completed; retain all earlier world changes.",
+      "image_url": "/api/lesson-sequences/assets/1507b4b2213442d482a695f8b88484fd_5e177fa53c1a/63d0203035aceb89cf5c/scene_008.png",
+      "animation": {
+        "action": "reveal",
+        "effect": "none",
+        "duration_ms": 650
+      }
+    },
+    {
+      "index": 9,
+      "description": "BEFORE CHALLENGE: Demo Student D approaching a pitfall trap near the temple entrance, cozy pixel art, consistent background and character.. Demo Student D approaching a pitfall trap near the temple entrance, cozy pixel art, consistent background and character.. To avoid falling, I need to solve 1 minus 20. That will keep me safe. Can you help me avoid the pitfall?. To avoid falling into a pitfall, solve: What is 1 - 20?. Show the obstacle or learning objects BEFORE the action; leave the task visibly incomplete.",
+      "image_url": "/api/lesson-sequences/assets/1507b4b2213442d482a695f8b88484fd_5e177fa53c1a/63d0203035aceb89cf5c/scene_009.png",
+      "animation": {
+        "action": "reveal",
+        "effect": "none",
+        "duration_ms": 650
+      }
+    },
+    {
+      "index": 10,
+      "description": "AFTER CHALLENGE: Demo Student D safely past the pitfall, standing in front of the lost temple entrance, same setting and style.. Demo Student D safely crosses the pitfall and stands before the lost temple entrance.. The hidden path leads near the temple entrance, but a pitfall blocks the way.. Can you help me avoid the pitfall?. Show the SAME location with the obstacle visibly changed/completed; retain all earlier world changes.",
+      "image_url": "/api/lesson-sequences/assets/1507b4b2213442d482a695f8b88484fd_5e177fa53c1a/63d0203035aceb89cf5c/scene_010.png",
+      "animation": {
+        "action": "pickaxe_swing",
+        "effect": "none",
+        "duration_ms": 650
+      }
+    },
+    {
+      "index": 11,
+      "description": "Demo Student D stands proudly before the open lost temple entrance on Integer Island. The sun shines softly over the lush green island shaped like a number line. Cozy pixel art style with low visual density.",
+      "image_url": "/api/lesson-sequences/assets/1507b4b2213442d482a695f8b88484fd_5e177fa53c1a/63d0203035aceb89cf5c/scene_011.png",
+      "animation": {
+        "action": "reveal",
+        "effect": "none",
+        "duration_ms": 650
+      }
+    }
+  ]
+}

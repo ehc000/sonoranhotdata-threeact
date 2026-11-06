@@ -13,6 +13,8 @@ from backend.database.router import router as database_router
 
 from backend.lesson_generation.router import router as lesson_router
 
+from backend.lesson_sequence_preparation import router as lesson_sequences_router
+
 from backend import auto_scene_images
 app = FastAPI(title="Adaptive Classroom API")
 
@@ -20,6 +22,7 @@ app.include_router(educator_router)
 app.include_router(avatar_router)
 app.include_router(database_router)
 app.include_router(lesson_router)
+app.include_router(lesson_sequences_router)
 
 app.add_middleware(
     CORSMiddleware,

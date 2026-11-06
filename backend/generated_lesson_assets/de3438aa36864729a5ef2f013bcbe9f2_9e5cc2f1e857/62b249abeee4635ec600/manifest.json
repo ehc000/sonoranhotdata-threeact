@@ -1,0 +1,126 @@
+{
+  "lesson_id": "de3438aa36864729a5ef2f013bcbe9f2",
+  "fingerprint": "62b249abeee4635ec6008dc3b0310e9df3b5399d89353e734dffd18835434e7b",
+  "scenes": [
+    {
+      "index": 0,
+      "description": "Cozy pixel art of a young explorer wearing a wide-brimmed hat and backpack, standing at the entrance of an ancient stone temple on a lush tropical island. The temple door is large and locked, with carved integer symbols glowing faintly on its surface.",
+      "image_url": "/api/lesson-sequences/assets/de3438aa36864729a5ef2f013bcbe9f2_9e5cc2f1e857/62b249abeee4635ec600/scene_000.png",
+      "animation": {
+        "action": "reveal",
+        "effect": "none",
+        "duration_ms": 650
+      }
+    },
+    {
+      "index": 1,
+      "description": "BEFORE CHALLENGE: Cozy pixel art of the explorer standing before a large stone temple door with a glowing lock panel showing '-2 + 3' puzzle.. Cozy pixel art of the explorer standing before a large stone temple door with a glowing lock panel showing '-2 + 3' puzzle.. The temple door has a glowing lock panel. It shows a puzzle: -2 plus 3. I need to solve it to open the door. Can you help me solve this puzzle to unlock the door?. To unlock the temple entrance, solve this puzzle: What is -2 + 3?. Show the obstacle or learning objects BEFORE the action; leave the task visibly incomplete.",
+      "image_url": "/api/lesson-sequences/assets/de3438aa36864729a5ef2f013bcbe9f2_9e5cc2f1e857/62b249abeee4635ec600/scene_001.png",
+      "animation": {
+        "action": "reveal",
+        "effect": "none",
+        "duration_ms": 650
+      }
+    },
+    {
+      "index": 2,
+      "description": "AFTER CHALLENGE: Same scene with the temple door open, light spilling out, and the explorer stepping inside.. The temple door clicks and slowly opens. Warm light spills out, inviting you inside.. Now that you understand how to add positive and negative numbers, you approach the temple door.. Can you help me solve this puzzle to unlock the door?. Show the SAME location with the obstacle visibly changed/completed; retain all earlier world changes.",
+      "image_url": "/api/lesson-sequences/assets/de3438aa36864729a5ef2f013bcbe9f2_9e5cc2f1e857/62b249abeee4635ec600/scene_002.png",
+      "animation": {
+        "action": "pickaxe_swing",
+        "effect": "none",
+        "duration_ms": 650
+      }
+    },
+    {
+      "index": 3,
+      "description": "BEFORE CHALLENGE: Inside the temple hallway, the explorer holds the ancient map with a puzzle '-8 + 21' glowing on it.. Inside the temple hallway, the explorer holds the ancient map with a puzzle '-8 + 21' glowing on it.. The map\u2019s coordinates shift. It shows a new puzzle: -8 plus 21. Solving it will reveal the path to the next chamber. Can you help me figure out the new coordinates?. On the ancient map, the coordinates shift by a certain amount. What is -8 + 21?. Show the obstacle or learning objects BEFORE the action; leave the task visibly incomplete.",
+      "image_url": "/api/lesson-sequences/assets/de3438aa36864729a5ef2f013bcbe9f2_9e5cc2f1e857/62b249abeee4635ec600/scene_003.png",
+      "animation": {
+        "action": "reveal",
+        "effect": "none",
+        "duration_ms": 650
+      }
+    },
+    {
+      "index": 4,
+      "description": "AFTER CHALLENGE: Same scene with the map updated, showing a highlighted path to the next chamber.. The map glows and updates, showing a bright path leading deeper into the temple.. With the entrance open, you step inside and hold the ancient map again.. Can you help me figure out the new coordinates?. Show the SAME location with the obstacle visibly changed/completed; retain all earlier world changes.",
+      "image_url": "/api/lesson-sequences/assets/de3438aa36864729a5ef2f013bcbe9f2_9e5cc2f1e857/62b249abeee4635ec600/scene_004.png",
+      "animation": {
+        "action": "pickaxe_swing",
+        "effect": "none",
+        "duration_ms": 650
+      }
+    },
+    {
+      "index": 5,
+      "description": "BEFORE CHALLENGE: Explorer standing before a stone wall with a glowing inscription puzzle '-15 + 4'.. Explorer standing before a stone wall with a glowing inscription puzzle '-15 + 4'.. The magic number inscription shows: -15 plus 4. Solving this will unlock the third chamber\u2019s door. Can you help me decode the inscription?. The magic number inscription reads: What is -15 + 4?. Show the obstacle or learning objects BEFORE the action; leave the task visibly incomplete.",
+      "image_url": "/api/lesson-sequences/assets/de3438aa36864729a5ef2f013bcbe9f2_9e5cc2f1e857/62b249abeee4635ec600/scene_005.png",
+      "animation": {
+        "action": "reveal",
+        "effect": "none",
+        "duration_ms": 650
+      }
+    },
+    {
+      "index": 6,
+      "description": "AFTER CHALLENGE: Same scene with the inscription glowing brighter and the chamber door slightly open.. The inscription glows brighter and the chamber door creaks open slightly.. The map led you to a stone wall with a glowing inscription.. Can you help me decode the inscription?. Show the SAME location with the obstacle visibly changed/completed; retain all earlier world changes.",
+      "image_url": "/api/lesson-sequences/assets/de3438aa36864729a5ef2f013bcbe9f2_9e5cc2f1e857/62b249abeee4635ec600/scene_006.png",
+      "animation": {
+        "action": "pickaxe_swing",
+        "effect": "none",
+        "duration_ms": 650
+      }
+    },
+    {
+      "index": 7,
+      "description": "BEFORE CHALLENGE: Explorer facing a stone guardian statue blocking a chamber door with the puzzle '-7 + 2' glowing.. Explorer facing a stone guardian statue blocking a chamber door with the puzzle '-7 + 2' glowing.. The guardian asks a puzzle: -7 plus 2. I must answer to pass. Can you help me solve the guardian\u2019s question?. To open the chamber door, the guardian asks: What is -7 + 2?. Show the obstacle or learning objects BEFORE the action; leave the task visibly incomplete.",
+      "image_url": "/api/lesson-sequences/assets/de3438aa36864729a5ef2f013bcbe9f2_9e5cc2f1e857/62b249abeee4635ec600/scene_007.png",
+      "animation": {
+        "action": "reveal",
+        "effect": "none",
+        "duration_ms": 650
+      }
+    },
+    {
+      "index": 8,
+      "description": "AFTER CHALLENGE: Same scene with the guardian statue lowered and the chamber door open.. The guardian statue lowers its arms and the chamber door swings open.. The third chamber is open, but a stone guardian blocks the next door.. Can you help me solve the guardian\u2019s question?. Show the SAME location with the obstacle visibly changed/completed; retain all earlier world changes.",
+      "image_url": "/api/lesson-sequences/assets/de3438aa36864729a5ef2f013bcbe9f2_9e5cc2f1e857/62b249abeee4635ec600/scene_008.png",
+      "animation": {
+        "action": "pickaxe_swing",
+        "effect": "none",
+        "duration_ms": 650
+      }
+    },
+    {
+      "index": 9,
+      "description": "BEFORE CHALLENGE: Explorer standing before a pedestal with a glowing puzzle '-14 + 25' in the temple\u2019s treasure room.. Explorer standing before a pedestal with a glowing puzzle '-14 + 25' in the temple\u2019s treasure room.. The pedestal shows a final puzzle: -14 plus 25. Solving it will unlock the last artifact. Can you help me unlock the final artifact?. The artifact pedestal requires solving this: What is -14 + 25?. Show the obstacle or learning objects BEFORE the action; leave the task visibly incomplete.",
+      "image_url": "/api/lesson-sequences/assets/de3438aa36864729a5ef2f013bcbe9f2_9e5cc2f1e857/62b249abeee4635ec600/scene_009.png",
+      "animation": {
+        "action": "reveal",
+        "effect": "none",
+        "duration_ms": 650
+      }
+    },
+    {
+      "index": 10,
+      "description": "AFTER CHALLENGE: Same scene with the pedestal open and the final artifact glowing brightly.. The pedestal opens slowly, revealing the last glowing integer artifact.. With the guardian gone, you reach the artifact pedestal in the treasure room.. Can you help me unlock the final artifact?. Show the SAME location with the obstacle visibly changed/completed; retain all earlier world changes.",
+      "image_url": "/api/lesson-sequences/assets/de3438aa36864729a5ef2f013bcbe9f2_9e5cc2f1e857/62b249abeee4635ec600/scene_010.png",
+      "animation": {
+        "action": "pickaxe_swing",
+        "effect": "none",
+        "duration_ms": 650
+      }
+    },
+    {
+      "index": 11,
+      "description": "Cozy pixel art of the explorer holding all glowing integer artifacts, standing inside the temple\u2019s treasure room filled with warm light and ancient stone walls.",
+      "image_url": "/api/lesson-sequences/assets/de3438aa36864729a5ef2f013bcbe9f2_9e5cc2f1e857/62b249abeee4635ec600/scene_011.png",
+      "animation": {
+        "action": "reveal",
+        "effect": "none",
+        "duration_ms": 650
+      }
+    }
+  ]
+}
