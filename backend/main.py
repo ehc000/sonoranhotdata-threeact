@@ -5,6 +5,7 @@ from pydantic import BaseModel
 
 # Import teammate's LLM function
 from backend.llm_query import query_llm
+from backend.avatar.router import router as avatar_router
 
 app = FastAPI(title="Adaptive Classroom API")
 
@@ -36,3 +37,5 @@ def generate(request: PromptRequest):
             status_code=500,
             detail="LLM generation failed"
         )
+
+app.include_router(avatar_router)
