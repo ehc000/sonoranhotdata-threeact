@@ -27,7 +27,6 @@ import Profile from './pages/student/Profile';
 import Avatar from './pages/student/Avatar';
 
 import Dashboard from './pages/teacher/Dashboard';
-import Students from './pages/teacher/Students';
 import Assignments from './pages/teacher/Assignments';
 import Analytics from './pages/teacher/Analytics';
 import Settings from './pages/teacher/Settings';
@@ -150,7 +149,7 @@ export default function App() {
               <span>📋</span>
               <strong>Teacher</strong>
               <small>
-                Class overview, students and assignments
+                Class overview, student profiles and lesson design
               </small>
             </button>
           </div>
@@ -185,13 +184,13 @@ export default function App() {
           </span>
         </header>
 
-        {/* Demo only: teachers can generate real lessons under Teacher → Assignments. */}
+        {/* Demo only: teachers can generate real lessons under Teacher → Design Lesson. */}
         {role === 'student' && page === 'Avatar' && (
           <div style={{ padding: '12px 20px', display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
             <button type="button" onClick={() => setPage('Mock Lesson')}>
               Example demo: Fraction Fortress
             </button>
-            <span style={{fontSize:12,color:'#64748b',alignSelf:'center'}}>Sample only · Generate a new lesson under Teacher → Assignments</span>
+            <span style={{fontSize:12,color:'#64748b',alignSelf:'center'}}>Sample only · Generate a new lesson under Teacher → Design Lesson</span>
           </div>
         )}
 
@@ -259,16 +258,6 @@ export default function App() {
                 students={demoStudents}
                 loading={studentsLoading}
                 error={studentsError}
-                onSelectStudent={studentId => {
-                  setSelectedStudentId(studentId);
-                  setPage('Students');
-                }}
-              />
-            )}
-
-            {page === 'Students' && (
-              <Students
-                students={demoStudents}
                 selectedStudentId={selectedStudentId}
                 onCreateLesson={studentId => {
                   setSelectedStudentId(studentId);
@@ -285,7 +274,7 @@ export default function App() {
             )}
 
             {page === 'Analytics' && (
-              <Analytics students={students} />
+              <Analytics />
             )}
 
             {page === 'Settings' && (

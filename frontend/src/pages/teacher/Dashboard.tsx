@@ -13,19 +13,22 @@
  */
 
 import type { ApiStudent } from '../../api/students';
+import Students from './Students';
 
 type DashboardProps = {
   students: ApiStudent[];
   loading: boolean;
   error: string | null;
-  onSelectStudent: (studentId: string) => void;
+  selectedStudentId: string | null;
+  onCreateLesson: (studentId: string) => void;
 };
 
 export default function Dashboard({
   students,
   loading,
   error,
-  onSelectStudent,
+  selectedStudentId,
+  onCreateLesson,
 }: DashboardProps) {
   return (
     <div className="page">
@@ -52,64 +55,17 @@ export default function Dashboard({
         </div>
       </div>
 
-      <div className="card">
-        <div className="section-header">
-          <h2>My students</h2>
-        </div>
-
-        {loading && <p className="muted">Loading students...</p>}
-
-        {error && (
-          <p role="alert">
-            Unable to load students: {error}
-          </p>
-        )}
-
-        {!loading && !error && students.length === 0 && (
-          <p className="muted">No demo students found.</p>
-        )}
-
-        {!loading && !error && (
-          <div className="student-list">
-            {students.map((student, index) => (
-              <button
-                key={student.id}
-                type="button"
-                className="student-row"
-                onClick={() => onSelectStudent(student.id)}
-                style={{
-                  width: '100%',
-                  textAlign: 'left',
-                  cursor: 'pointer',
-                  border: 'none',
-                  background: 'transparent',
-                  font: 'inherit',
-                }}
-              >
-                <span className="mini-avatar">
-                  {['🎮', '🔬', '💻', '🚀'][index % 4]}
-                </span>
-
-                <div>
-                  <strong>{student.name}</strong>
-                  <p className="muted small">
-                    {student.grade_level !== null
-                      ? `Grade ${student.grade_level}`
-                      : 'Grade not specified'}
-                  </p>
-                </div>
-
-                <span className="score">→</span>
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
-
-      <p className="muted small">
-        Lesson progress and competency results will appear
-        after real student activity has been recorded.
-      </p>
+      {loading && <p className="muted">Loading students...</p>}
+      {error && <p role="alert">Unable to load students: {error}</p>}
+      {!loading && !error && students.length === 0 && <p className="muted">No demo students found.</p>}
+      {!loading && !error && students.length > 0 && (
+        <Students
+          students={students}
+          selectedStudentId={selectedStudentId}
+          onCreateLesson={onCreateLesson}
+        />
+      )}
+      <p className="muted small">Lesson progress and competency results will appear after real student activity has been recorded. Tile progress is illustrative demo data.</p>
     </div>
   );
 }
