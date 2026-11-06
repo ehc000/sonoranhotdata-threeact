@@ -257,3 +257,13 @@ frontend.backup.*/
 *.db-wal
 .DS_Store
 .env
+
+# Development backups and temporary files
+frontend.backup.*/
+backup_lesson_files/
+README_PATCH.txt
+README.txt
+.gitignore.additions
+.DS_Store
+classroom.db.before_profiles*
+classroom.db.empty-backup

@@ -1,1 +1,0 @@
-export default function Settings(){return <div className="page narrow"><p className="eyebrow">TEACHER TOOLS</p><h1>Settings</h1><div className="card"><h2>Classroom preferences</h2><p className="muted">Settings and school integrations will be connected in a later phase.</p><p>🔒 Real accounts and teacher authorization are not enabled in this demo.</p></div></div>}
