@@ -1,3 +1,6 @@
+from backend.lesson_scene_pairs import router as lesson_scene_pairs_router
+from backend.scene_sequence import router as scene_sequence_router
+from backend import scene_images
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -10,6 +13,7 @@ from backend.database.router import router as database_router
 
 from backend.lesson_generation.router import router as lesson_router
 
+from backend import auto_scene_images
 app = FastAPI(title="Adaptive Classroom API")
 
 app.include_router(educator_router)
@@ -42,3 +46,13 @@ async def generate(request: PromptRequest):
             detail="LLM generation failed"
         )
     
+# AI-assisted reference-guided image endpoint
+app.include_router(scene_images.router)
+
+# AUTO_LESSON_ART_V1
+app.include_router(auto_scene_images.router)
+
+# AI-assisted dynamic illustrated lesson frames
+app.include_router(scene_sequence_router)
+
+app.include_router(lesson_scene_pairs_router)

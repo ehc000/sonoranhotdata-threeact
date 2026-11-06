@@ -988,7 +988,7 @@ export default function Assignments({
           <p className="muted small">
             Local rendering only. Simulated progress is not saved and no lesson is assigned.
           </p>
-          <LessonRenderer key={`${assembledLesson.lesson_id}:${studentId}`} lesson={toRenderableLesson(assembledLesson)} studentName={selectedStudent?.name} studentInterests={profileText('interests')} />
+          <LessonRenderer key={`${assembledLesson.lesson_id}:${studentId}`} lesson={toRenderableLesson(assembledLesson)} studentName={selectedStudent?.name} studentInterests={profileText('interests')} studentId={studentId} />
         </section>
       )}
 
