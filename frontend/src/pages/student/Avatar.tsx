@@ -5,6 +5,7 @@
 import { useEffect, useState } from 'react';
 import type { Student } from '../../types';
 import MiguelAvatar, { PixelAvatarImage, isUuid } from '../../components/MiguelAvatar';
+import LessonAvatarSprite from '../../components/lesson/LessonAvatarSprite';
 const API = 'http://localhost:8000';
 type Catalog = { bases: string[]; heads: Record<string, string[]>; colors: string[]; color_names?: string[]; eyes: string[]; pets: string[] };
 type AvatarData = { base: string; primary_color: string; head: string; eyes: string; display_name: string; static_mode: boolean };
@@ -45,7 +46,9 @@ export default function Avatar({ student, onUpdate: _onUpdate }: { student: Stud
     return () => { active = false; };
   }, [student.id]);
   async function save() {
-    if (!avatar || !isUuid(student.id)) return;
+    if (!avatar) return;
+    localStorage.setItem('sonoran-lesson-avatar-preview', JSON.stringify(avatar));
+    if (!isUuid(student.id)) { setMessage('Demo avatar ready! Open a new teacher lesson preview to see this character.'); return; }
     setMessage('Saving…');
     try {
       const response = await fetch(`${API}/avatar/${student.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ avatar, pet_type: pet, preferences: { ...preferences, interests: preferences.interests.length ? preferences.interests : student.interests } }) });
@@ -60,14 +63,18 @@ export default function Avatar({ student, onUpdate: _onUpdate }: { student: Stud
   return <div className="page narrow">
     <p className="eyebrow">MAKE IT YOURS</p><h1>Customize your avatar</h1>
     <p className="lead">Customize your character. Your full-body adventure sprite appears in lessons.</p>
-    {!isUuid(student.id) && <p role="alert" style={{ padding: 10, background: '#fff4dd', borderRadius: 8, fontSize: 13 }}>Demo preview only: this student's ID isn't connected to Miguel's avatar records, so saving is disabled.</p>}
+    {!isUuid(student.id) && <p role="status" style={{ padding: 10, background: '#fff4dd', borderRadius: 8, fontSize: 13 }}>Demo mode: your changes preview in the teacher lesson without saving to a student account.</p>}
     {catalog && avatar ? <div className="card" style={{ display: 'grid', gap: 14, padding: 18 }}>
       <label style={field}>Avatar name<input style={control} maxLength={20} placeholder="Give your character a name" value={avatar.display_name} onChange={e => setAvatar({ ...avatar, display_name: e.target.value })} /></label>
-      <div style={{ display: 'grid', placeItems: 'center', gap: 8, padding: '14px 8px', border: '1px solid #d7e1e8', background: '#eef4f7', borderRadius: 12 }}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', alignItems: 'center', gap: 20, padding: '14px 8px', border: '1px solid #d7e1e8', background: '#eef4f7', borderRadius: 12 }}>
         <PixelAvatarImage src={preview} alt="Live sharp character preview" size={220} />
-        <span style={{ fontSize: 12, color: '#4c6376' }}>Live preview · original sharp SVG</span>
+        <span style={{ fontSize: 12, color: '#4c6376' }}>Miguel's original avatar portrait</span>
+        <div style={{background:'#dcebf3',borderRadius:12,padding:12,width:'min(100%,260px)',boxSizing:'border-box',textAlign:'center'}}>
+          <strong style={{fontSize:13,color:'#27364b'}}>Exactly as shown in lessons</strong>
+          <svg viewBox="0 0 100 110" role="img" aria-label="Live pixel-art lesson avatar" style={{display:'block',width:170,height:187,margin:'auto',imageRendering:'pixelated'}}><g transform="translate(8 8)"><LessonAvatarSprite choice={avatar}/></g></svg>
+        </div>
       </div>
-      <div style={{ padding: 10, background: '#f1f5f9', borderRadius: 10, fontSize: 12, color: '#42556a' }}>The lesson uses a separate full-body pixel sprite based on these choices. This editor keeps Miguel's original sharp portrait.</div>
+      <div style={{ padding: 10, background: '#f1f5f9', borderRadius: 10, fontSize: 12, color: '#42556a' }}>Your selections update the lesson sprite above immediately. Open a new teacher lesson preview to see it in the story.</div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(155px, 1fr))', gap: 12 }}>
         <label style={field}>Character type<select style={control} value={avatar.base} onChange={e => { const base = e.target.value; setAvatar({ ...avatar, base, head: catalog.heads[base][0] }); }}>{catalog.bases.map(x => <option key={x} value={x}>{pretty(x)}</option>)}</select></label>
         <label style={field}>Head<select style={control} value={avatar.head} onChange={e => setAvatar({ ...avatar, head: e.target.value })}>{catalog.heads[avatar.base].map(x => <option key={x} value={x}>{pretty(x.replace(`${avatar.base}_`, ''))}</option>)}</select></label>
@@ -80,7 +87,7 @@ export default function Avatar({ student, onUpdate: _onUpdate }: { student: Stud
         <input type="checkbox" aria-label="Reduce motion" checked={avatar.static_mode} onChange={e => setAvatar({ ...avatar, static_mode: e.target.checked })} style={{ width: 20, height: 20, accentColor: '#285a80', flexShrink: 0 }} />
         <span><strong style={{ display: 'block' }}>Reduce motion</strong><span style={{ fontSize: 12, color: '#476275' }}>Prefer a still character without animations. This setting will also apply when motion is added later.</span></span>
       </label>
-      <button className="btn primary" disabled={!isUuid(student.id)} onClick={save}>Save avatar</button>
+      <button className="btn primary" onClick={save}>{isUuid(student.id) ? 'Save avatar' : 'Use in lesson demo'}</button>
       {savedVersion > 0 && <div><p>Saved avatar</p><MiguelAvatar key={savedVersion} studentId={student.id} size={260} /></div>}
     </div> : <p>Loading avatar options…</p>}
     {message && <p role="status">{message}</p>}

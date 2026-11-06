@@ -20,39 +20,16 @@
 
 import { useEffect, useState } from 'react';
 import type { ApiStudent } from '../../api/students';
+import LessonAvatarSprite from '../../components/lesson/LessonAvatarSprite';
 
-type StudentProfile = {
-  student?: Record<string, unknown>;
-  preferences?: Record<string, unknown>;
-  sections?: unknown;
-  teacher_notes?: unknown;
-};
+type ProfileSection = { ai_summary: string; teacher_notes: { note_text: string }[] };
+type StudentProfile = Record<string, ProfileSection>;
 
 type StudentsProps = {
   students: ApiStudent[];
   selectedStudentId: string | null;
   onCreateLesson: (studentId: string) => void;
 };
-
-function displayValue(value: unknown): string {
-  if (value === null || value === undefined || value === '') {
-    return 'Not specified';
-  }
-
-  if (Array.isArray(value)) {
-    return value.length ? value.map(String).join(', ') : 'Not specified';
-  }
-
-  if (typeof value === 'boolean') {
-    return value ? 'Yes' : 'No';
-  }
-
-  if (typeof value === 'object') {
-    return JSON.stringify(value);
-  }
-
-  return String(value);
-}
 
 export default function Students({
   students,
@@ -63,9 +40,14 @@ export default function Students({
     selectedStudentId ?? students[0]?.id ?? ''
   );
 
+  const [openDetails, setOpenDetails] = useState(false);
   const [profile, setProfile] = useState<StudentProfile | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [noteDrafts, setNoteDrafts] = useState<Record<string, string>>({});
+  const [savingNote, setSavingNote] = useState(false);
+  const [noteError, setNoteError] = useState<string | null>(null);
+  const [savedSection, setSavedSection] = useState<string | null>(null);
 
   useEffect(() => {
     if (
@@ -81,6 +63,12 @@ export default function Students({
       setSelected(students[0].id);
     }
   }, [selected, students]);
+
+  useEffect(() => {
+    setNoteDrafts({});
+    setNoteError(null);
+    setSavedSection(null);
+  }, [selected]);
 
   useEffect(() => {
     if (!selected) return;
@@ -125,6 +113,34 @@ export default function Students({
     return () => controller.abort();
   }, [selected]);
 
+  async function saveNote(section: string) {
+    const noteText = noteDrafts[section]?.trim() ?? '';
+    if (!selected || !noteText || savingNote) return;
+    setSavingNote(true);
+    setNoteError(null);
+    setSavedSection(null);
+    try {
+      const response = await fetch(`/api/students/${encodeURIComponent(selected)}/notes`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ section, note_text: noteText }),
+      });
+      if (!response.ok) {
+        const message = await response.text();
+        throw new Error(`Unable to save comment (${response.status}): ${message}`);
+      }
+      const refreshed = await fetch(`/api/students/${encodeURIComponent(selected)}/profile`);
+      if (!refreshed.ok) throw new Error('Comment saved, but profile refresh failed.');
+      setProfile(await refreshed.json() as StudentProfile);
+      setNoteDrafts(previous => ({ ...previous, [section]: '' }));
+      setSavedSection(section);
+    } catch (err) {
+      setNoteError(err instanceof Error ? err.message : 'Unable to save comment');
+    } finally {
+      setSavingNote(false);
+    }
+  }
+
   const student = students.find(s => s.id === selected);
 
   return (
@@ -135,24 +151,33 @@ export default function Students({
         Review learning preferences, teacher notes, and lesson planning.
       </p>
 
-      <div className="two-col student-layout">
-        <div className="card">
-          <h3>Students</h3>
-
-          {students.map(s => (
-            <button
-              type="button"
-              className={
-                'student-select ' + (selected === s.id ? 'chosen' : '')
-              }
-              key={s.id}
-              onClick={() => setSelected(s.id)}
-            >
-              {s.name}
-            </button>
-          ))}
-        </div>
-
+      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(210px,1fr))',gap:14,margin:'20px 0'}}>
+        {students.map((s, i) => {
+          const demoNames = ['Adam Smith', 'Bella Johnson', 'Carlos Rivera', 'Daisy Lee', 'Ethan Brown', 'Fatima Khan'];
+          const demoGroups = ['Academic', 'Functional', 'Functional', 'Exploratory'];
+          const lessonProgress = [65, 35, 80, 20, 55, 45][i % 6];
+          const competencyProgress = [45, 60, 70, 30, 50, 40][i % 6];
+          const avatarChoice = {base:['human','animal','robot','creature'][i % 4],head:['human_round','animal_cat','robot_square','creature_blob'][i % 4],eyes:'dots',primary_color:['#A8C5DA','#E9B777','#B5A5D4','#9AC9AE'][i % 4]};
+          return <button key={s.id} type="button" onClick={() => {setSelected(s.id);setOpenDetails(true)}}
+            aria-pressed={openDetails && selected===s.id}
+            style={{display:'grid',justifyItems:'center',gap:8,textAlign:'center',padding:18,borderRadius:16,cursor:'pointer',background:'#fff',color:'#26364c',border:selected===s.id&&openDetails?'2px solid #39789c':'1px solid #d7e1e8',boxShadow:'0 4px 14px #193a5410'}}>
+            <div style={{height:104,width:104,borderRadius:14,background:'#eaf2f6',display:'grid',placeItems:'center'}}>
+              <svg viewBox="0 0 100 110" width="88" height="96" role="img" aria-label={`Pixel avatar for ${demoNames[i] ?? s.name}`} style={{imageRendering:'pixelated'}}><g transform="translate(8 8)"><LessonAvatarSprite choice={avatarChoice}/></g></svg>
+            </div>
+            <strong>{demoNames[i] ?? `Student ${i+1}`}</strong>
+            <span style={{fontSize:13,color:'#607589'}}>{demoGroups[i % 4]} group</span>
+            <div style={{width:'100%',textAlign:'left',fontSize:12,color:'#51677a'}}>
+              <div style={{display:'flex',justifyContent:'space-between'}}><span>Lesson progress</span><span>{lessonProgress}%</span></div>
+              <div style={{height:8,background:'#e6edf3',borderRadius:20,overflow:'hidden',margin:'5px 0 10px'}}><div style={{width:`${lessonProgress}%`,height:'100%',background:'#417f9d'}}/></div>
+              <div style={{display:'flex',justifyContent:'space-between'}}><span>Competency experience</span><span>{competencyProgress}%</span></div>
+              <div style={{height:8,background:'#e6edf3',borderRadius:20,overflow:'hidden',marginTop:5}}><div style={{width:`${competencyProgress}%`,height:'100%',background:'#9d6784'}}/></div>
+            </div>
+            <span style={{fontSize:11,color:'#7b8795'}}>Illustrative demo progress</span>
+            <span style={{fontSize:12,color:'#285a80',fontWeight:700}}>View profile →</span>
+          </button>;
+        })}
+      </div>
+      {openDetails && <div style={{maxWidth:850,margin:'0 auto'}}>
         <div className="card">
           {!student && <p className="muted">Select a student.</p>}
 
@@ -190,54 +215,49 @@ export default function Students({
 
               {profile && !loading && (
                 <>
-                  <h3>Learning preferences</h3>
+                  <h3>Learning profile</h3>
+                  {Object.entries(profile).map(([key, section]) => (
+                    <div className="detail-row" key={key} style={{ display: 'block' }}>
+                      <strong style={{ display: 'block', marginBottom: 8 }}>{key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}</strong>
+                      <div style={{ width: '100%', minWidth: 0 }}>
+                        {section.ai_summary?.trim() ? (
+                          <p>{section.ai_summary}</p>
+                        ) : (
+                          <p className="muted small">No summary yet.</p>
+                        )}
+                        {section.teacher_notes?.map((note, i) => (
+                          <p key={i}><strong>Teacher comment:</strong> {note.note_text}</p>
+                        ))}
+                        <textarea
+                          aria-label={`Teacher comment for ${key.replace(/_/g, ' ')}`}
+                          value={noteDrafts[key] ?? ''}
+                          onChange={e => {
+                            setNoteDrafts(previous => ({ ...previous, [key]: e.target.value }));
+                            setSavedSection(null);
+                          }}
+                          placeholder="Add a teacher comment..."
+                          rows={2}
+                          style={{ display: 'block', width: '100%', boxSizing: 'border-box', margin: '8px 0', padding: 10 }}
+                        />
+                        <button
+                          type="button"
+                          className="btn primary"
+                          disabled={savingNote || !(noteDrafts[key] ?? '').trim()}
+                          onClick={() => void saveNote(key)}
+                        >
+                          {savingNote ? 'Saving...' : 'Save comment'}
+                        </button>
+                        {savedSection === key && <p role="status">Comment saved.</p>}
+                      </div>
+                    </div>
+                  ))}
+                  {noteError && <p role="alert">{noteError}</p>}
 
-                  {profile.preferences &&
-                    Object.entries(profile.preferences).map(
-                      ([key, value]) => (
-                        <div className="detail-row" key={key}>
-                          <strong>
-                            {key.replace(/_/g, ' ')}
-                          </strong>
-                          <span>{displayValue(value)}</span>
-                        </div>
-                      )
-                    )}
-
-                  <h3 style={{ marginTop: 24 }}>Learning profile</h3>
-
-                  {profile.sections ? (
-                    <pre style={{
-                      whiteSpace: 'pre-wrap',
-                      overflowWrap: 'anywhere',
-                      fontFamily: 'inherit',
-                      fontSize: '0.9rem',
-                    }}>
-                      {JSON.stringify(profile.sections, null, 2)}
-                    </pre>
-                  ) : (
-                    <p className="muted">
-                      No profile sections available.
-                    </p>
-                  )}
-
-                  <h3 style={{ marginTop: 24 }}>Teacher notes</h3>
-
-                  {profile.teacher_notes ? (
-                    <pre style={{
-                      whiteSpace: 'pre-wrap',
-                      overflowWrap: 'anywhere',
-                      fontFamily: 'inherit',
-                      fontSize: '0.9rem',
-                    }}>
-                      {JSON.stringify(profile.teacher_notes, null, 2)}
-                    </pre>
-                  ) : (
-                    <p className="muted">
-                      No teacher notes returned.
-                    </p>
-                  )}
-
+                  <h3 style={{marginTop:24}}>Skills & experience</h3>
+                  <p className="muted">Experience tracker (illustrative only; not a mastery assessment)</p>
+                  <div style={{display:'flex',flexWrap:'wrap',gap:8,marginBottom:18}}>
+                    {['Fractions · introduced','Problem solving · practiced','Story challenges · explored'].map(label=><span key={label} style={{padding:'8px 12px',borderRadius:20,background:'#e9f3fa',fontSize:12}}>{label}</span>)}
+                  </div>
                   <h3 style={{ marginTop: 24 }}>
                     Competency mastery
                   </h3>
@@ -245,9 +265,9 @@ export default function Students({
                     No verified competency results displayed yet.
                   </p>
 
-                  <h3>Recent lesson observations</h3>
+                  <h3>Lesson summaries</h3>
                   <p className="muted">
-                    Lesson observations will appear after
+                    Saved lesson summaries will appear after
                     student activities are recorded.
                   </p>
                 </>
@@ -255,7 +275,7 @@ export default function Students({
             </>
           )}
         </div>
-      </div>
+      </div>}
     </div>
   );
 }

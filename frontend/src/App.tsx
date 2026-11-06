@@ -181,8 +181,7 @@ export default function App() {
           </span>
 
           <span className="topbar-account">
-            {role === 'student' ? student.avatar : '📋'}
-            {' '}Demo view
+            <img src="/azacs-logo.png" alt="AZACS logo" style={{height:38,width:62,objectFit:"contain"}} />
           </span>
         </header>
 

@@ -21,13 +21,6 @@ export type ApiStudent = {
   grade_level: number | null;
 };
 
-const DEMO_STUDENT_IDS = new Set([
-  'e4eeb9ea-6c3c-5c75-83fe-002459e66b0a',
-  '0354e038-7100-5b4f-bbda-2c42a26d8b8d',
-  '3800180f-a8eb-5080-a196-bffecb1019b8',
-  '4592a59f-0dae-5c19-a834-6b0847683c79',
-]);
-
 export async function getDemoStudents(): Promise<ApiStudent[]> {
   const response = await fetch('/api/students');
 
@@ -39,7 +32,5 @@ export async function getDemoStudents(): Promise<ApiStudent[]> {
 
   const students: ApiStudent[] = await response.json();
 
-  return students.filter(student =>
-    DEMO_STUDENT_IDS.has(student.id)
-  );
+  return students;
 }

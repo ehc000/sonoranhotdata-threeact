@@ -106,6 +106,10 @@ type PreviewQuestion = {
   // AI-assisted fix (2026-11-05): Match backend-generated help field.
   optional_walkthrough?: string[];
   visual_prompt?: string;
+  before_visual_prompt?: string;
+  after_visual_prompt?: string;
+  success_event?: string;
+  story_bridge?: string;
 };
 
 type AssembledLesson = {
@@ -504,7 +508,7 @@ export default function Assignments({
       ].filter(Boolean).join('; ');
       // Keep the demo/test-story path usable when a newly seeded student has
       // no interests. In that case the theme is the story, not a student claim.
-      const questionTheme = interests || selectedConcept.title;
+      const questionTheme = `${selectedConcept.title}. ${selectedConcept.premise}. Goal: ${selectedConcept.story_goal}`;
       const learningContext = ['strengths', 'challenges', 'struggles', 'supports', 'notes']
         .map(section => {
           const content = sectionText(section);
@@ -522,8 +526,9 @@ export default function Assignments({
           educator_prompt: [
             `Learning objective: ${objective.trim()}`,
             teacherInstructions.trim(),
-            `Story premise: ${selectedConcept.premise}`,
-            `Use the student's interests in the actual question wording while preserving the original mathematics and answer. Interests: ${questionTheme}`,
+            `SELECTED STORY (mandatory for every question): ${selectedConcept.title}. Premise: ${selectedConcept.premise}. Goal: ${selectedConcept.story_goal}.`,
+            `All five questions must take place in this SAME setting and advance this ONE continuous adventure. Do not switch to unrelated Minecraft, treasure hunts, or other settings just because they are student interests. Adapt only the story context, never the original mathematical expression, numbers, operation, answer, competency, or difficulty.`,
+            `Use student interests only when they fit the selected story setting. Preserve original mathematics and answer. Interests: ${interests || 'Not specified'}`,
             learningContext ? `Student learning context (adapt wording and supports, do not change the academic competency):\n${learningContext}` : '', 
           ]
             .filter(Boolean)
@@ -629,7 +634,7 @@ export default function Assignments({
       return;
     }
     setAssembling(true);
-    setAssemblyMessage('Assembling lesson. Waiting for the story sequence...');
+    setAssemblyMessage('Waiting… Preparing lesson and images. This may take several minutes...');
     setError(null);
     setAssembledLesson(null);
     setPreparedSequence(null);
@@ -657,8 +662,11 @@ export default function Assignments({
         }),
       });
       const lesson: AssembledLesson = await readJson(response);
+      // AI-assisted modification (2026-11-05): Wait for all saved scenes before showing preview.
+      setAssemblyMessage('Waiting… Generating and saving lesson images...');
+      await prepareAnimatedLesson(lesson);
       setAssembledLesson(lesson);
-      setAssemblyMessage('Lesson assembled. Preview is below.');
+      setAssemblyMessage('Lesson and images ready. Preview is below.');
       window.setTimeout(() => document.getElementById('assembled-lesson-preview')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 0);
     } catch (err) {
       setAssemblyMessage(err instanceof Error ? err.message : 'Unable to assemble lesson');
@@ -682,32 +690,33 @@ export default function Assignments({
   // AI-assisted addition: Generate scene images in order using the backend.
   // Reference: Fetch API https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API
   // No grading, lesson assignment, or student-progress persistence occurs here.
-  async function prepareAnimatedLesson() {
-    if (!assembledLesson || preparingAnimation) return;
+  async function prepareAnimatedLesson(lesson: AssembledLesson) {
     setPreparingAnimation(true);
     setAnimationMessage('Preparing sequential story scenes...');
     setPreparedSequence(null);
     try {
-      const questions = assembledLesson.activities.flatMap(activity => activity.questions);
+      const questions = lesson.activities.flatMap(activity => activity.questions);
       const scenes = [
         {
-          description: assembledLesson.introduction_visual_prompt || assembledLesson.introduction,
+          description: lesson.introduction_visual_prompt || lesson.introduction,
           action: 'reveal',
         },
-        ...questions.map(question => {
-          const description = question.visual_prompt || question.narrative || question.text;
-          return {
-            description,
-            action: inferSceneAction([
-              question.visual_prompt,
-              question.narrative,
-              question.story_dialogue,
-              question.challenge_transition,
-            ].filter(Boolean).join(' ')),
-          };
+        ...questions.flatMap(question => {
+          const action = inferSceneAction([
+            question.visual_prompt, question.narrative, question.story_dialogue,
+            question.challenge_transition, question.success_event,
+          ].filter(Boolean).join(' '));
+          const before = [question.before_visual_prompt, question.visual_prompt,
+            question.narrative, question.text].filter(Boolean).join('. ');
+          const after = [question.after_visual_prompt, question.success_event,
+            question.story_bridge, question.challenge_transition].filter(Boolean).join('. ');
+          return [
+            { description: `BEFORE CHALLENGE: ${before}. Show the obstacle or learning objects BEFORE the action; leave the task visibly incomplete.`, action: 'reveal' },
+            { description: `AFTER CHALLENGE: ${after || `The ${action} task is completed`}. Show the SAME location with the obstacle visibly changed/completed; retain all earlier world changes.`, action },
+          ];
         }),
         {
-          description: assembledLesson.conclusion_visual_prompt || assembledLesson.conclusion,
+          description: lesson.conclusion_visual_prompt || lesson.conclusion,
           action: 'reveal',
         },
       ];
@@ -715,18 +724,23 @@ export default function Assignments({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          lesson_id: assembledLesson.lesson_id,
-          story_title: assembledLesson.story.title,
-          setting: [assembledLesson.story.premise, assembledLesson.story.story_goal]
+          lesson_id: lesson.lesson_id,
+          story_title: lesson.story.title,
+          setting: [lesson.story.premise, lesson.story.story_goal]
             .filter(Boolean).join('. '),
           scenes,
+          story_complexity: lesson.story_complexity || storyComplexity,
         }),
       });
-      const data = await readJson(response);
+      const data: PreparedLessonSequence = await readJson(response);
+      if (data.lesson_id !== lesson.lesson_id || !Array.isArray(data.scenes) || data.scenes.length !== scenes.length) {
+        throw new Error(`Image preparation returned an incomplete sequence (expected ${scenes.length} scenes).`);
+      }
       setPreparedSequence(data);
-      setAnimationMessage(`Prepared ${data.scenes.length} saved scenes.`);
+      setAnimationMessage(`Prepared ${data.scenes.length} saved frames (before/after each challenge).`);
     } catch (err) {
       setAnimationMessage(err instanceof Error ? err.message : 'Unable to prepare scenes');
+      throw err;
     } finally {
       setPreparingAnimation(false);
     }
@@ -777,7 +791,17 @@ export default function Assignments({
             {profileText('learning_preferences_text') && <p><strong>Learning preferences:</strong> {profileText('learning_preferences_text')}</p>}
             {profileText('strengths') && <p><strong>Strengths:</strong> {profileText('strengths')}</p>}
             {profileText('supports') && <p><strong>Supports:</strong> {profileText('supports')}</p>}
-            <p className="muted small">This shows fields available in the teacher student list. Missing details are not invented. Existing teacher notes remain unchanged.</p>
+            {fullStudentProfile && Object.entries(fullStudentProfile).map(([section, details]) => {
+              const summary = details?.ai_summary?.trim();
+              const notes = details?.teacher_notes ?? [];
+              if (!summary && notes.length === 0) return null;
+              return <div key={section} style={{marginTop: 10}}>
+                <strong>{section.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}:</strong>
+                {summary && <p>{summary}</p>}
+                {notes.map((note, i) => <p key={i}><strong>Teacher note:</strong> {note.note_text}</p>)}
+              </div>;
+            })}
+            <p className="muted small">Profile summaries and teacher notes are loaded from the saved student profile.</p>
           </section>
         )}
 
@@ -832,12 +856,12 @@ export default function Assignments({
             setAssemblyMessage(null);
           }}
         >
-          <option value="simple">Simple</option>
+          <option value="simple">Low</option>
           <option value="moderate">Moderate</option>
           <option value="rich">Rich</option>
         </select>
         <p className="muted small">
-          Controls generated story wording, not the difficulty or wording of approved questions.
+          Controls story wording, visual density, and scene motion; not academic difficulty or approved questions.
         </p>
 
         <label htmlFor="lesson-instructions">
@@ -1112,7 +1136,7 @@ export default function Assignments({
             disabled={assembling || busyQuestionId !== null || reviewCount === 0}
             onClick={assemblePreview}
           >
-            {assembling ? 'Assembling lesson...' : 'Review & Assemble Lesson'}
+            {assembling ? 'Waiting… Preparing lesson and images' : 'Review & Assemble Lesson'}
           </button>
           {assemblyMessage && (
             <p role="status" aria-live="polite" style={{ marginTop: 12 }}>
@@ -1138,13 +1162,13 @@ export default function Assignments({
           <h2>Prepare animated lesson</h2>
           <p className="muted small">
             Generate and save connected scene illustrations for this reviewed lesson.
-            The student player is not connected to these saved scenes yet.
+            Scenes are generated automatically before preview. You can regenerate them here if needed.
           </p>
           <button
             type="button"
             className="btn primary"
             disabled={preparingAnimation}
-            onClick={prepareAnimatedLesson}
+            onClick={() => { if (assembledLesson) void prepareAnimatedLesson(assembledLesson).catch(() => {}); }}
           >
             {preparingAnimation ? 'Preparing animated lesson...' : 'Prepare Animated Lesson'}
           </button>

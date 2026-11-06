@@ -65,6 +65,16 @@ export default function Learn({
         One idea at a time. Go at your own pace.
       </p>
 
+      <section className="card" aria-label="Learning pathway" style={{marginBottom:18}}>
+        <h2 style={{fontSize:19,marginTop:0}}>My learning pathway</h2>
+        <p className="muted small">Example pathway · not verified competency results</p>
+        <div style={{display:'flex',alignItems:'center',flexWrap:'wrap',gap:9}}>
+          {['Understand equal parts','Identify fractions','Compare fractions','Solve fraction problems'].map((skill,i)=><div key={skill} style={{display:'flex',alignItems:'center',gap:9}}>
+            {i>0&&<span aria-hidden="true" style={{color:'#7c8c9c'}}>→</span>}
+            <span style={{padding:'11px 13px',borderRadius:12,border:i===0?'2px solid #407eaa':'1px solid #cbd9e3',background:i===0?'#e9f4ff':'#f8fafc',fontWeight:i===0?750:500,fontSize:13}}>{skill}</span>
+          </div>)}
+        </div>
+      </section>
       <div className="card lesson-card">
         <div className="lesson-top">
           <span className="tag">
