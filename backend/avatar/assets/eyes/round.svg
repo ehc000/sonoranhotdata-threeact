@@ -1,4 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
-<defs><linearGradient id="sh" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFFFFF" stop-opacity=".4"/><stop offset=".5" stop-color="#FFFFFF" stop-opacity="0"/><stop offset="1" stop-color="#000000" stop-opacity=".12"/></linearGradient></defs>
-<circle cx="38" cy="47" r="5.5" fill="#3B4752"/><circle cx="39.6" cy="45.4" r="2" fill="#FFFFFF"/><circle cx="62" cy="47" r="5.5" fill="#3B4752"/><circle cx="63.6" cy="45.4" r="2" fill="#FFFFFF"/>
-</svg>

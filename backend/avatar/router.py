@@ -1,34 +1,20 @@
 """FastAPI router for the avatar module (prefix /avatar)."""
-import json
-from pathlib import Path
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException, Query, Response
+from fastapi import APIRouter, HTTPException, Request, Response
 
-from backend.avatar import growth, renderer, storage
+from backend.avatar import catalog, growth, renderer, storage
 from backend.avatar.models import Avatar, Event, Pet, SaveRequest, Student
 from backend.avatar.questionnaire import QUESTIONS
 
 router = APIRouter(prefix="/avatar", tags=["avatar"])
 
-CATALOG = json.loads((Path(__file__).parent / "catalog.json").read_text(encoding="utf-8"))
 
-
-def _check_choices(a: Avatar, pet_type: str) -> None:
-    """Only options listed in the catalog are allowed (closed choices, never free text)."""
-    problems = []
-    if a.base not in CATALOG["bases"]:
-        problems.append(f"unknown base: {a.base}")
-    elif a.head not in CATALOG["heads"][a.base]:
-        problems.append(f"head {a.head} does not belong to base {a.base}")
-    if a.primary_color.upper() not in CATALOG["colors"]:
-        problems.append(f"unknown color: {a.primary_color}")
-    if a.eyes not in CATALOG["eyes"]:
-        problems.append(f"unknown eyes: {a.eyes}")
-    if pet_type not in CATALOG["pets"]:
-        problems.append(f"unknown pet: {pet_type}")
-    if problems:
-        raise HTTPException(status_code=422, detail=problems)
+def _check_choices(a: Avatar) -> None:
+    """Only choices listed in the catalog are allowed (closed choices, never free text)."""
+    found = catalog.problems(a.base, a.options)
+    if found:
+        raise HTTPException(status_code=422, detail=found)
 
 
 def _get_or_404(student_id: UUID) -> Student:
@@ -45,8 +31,8 @@ def health() -> dict:
 
 # These fixed paths come before /{student_id} so "catalog" is not read as a student id.
 @router.get("/catalog")
-def catalog() -> dict:
-    return CATALOG
+def get_catalog() -> dict:
+    return catalog.public_catalog()
 
 
 @router.get("/questionnaire")
@@ -55,14 +41,15 @@ def questionnaire_questions() -> list:
 
 
 @router.get("/preview.svg")
-def preview_svg(base: str, primary_color: str, head: str, eyes: str, pet_type: str, stage: int = Query(1, ge=1, le=5)) -> Response:
-    """Draws unsaved choices, so the onboarding screens can show a live preview."""
-    try:
-        avatar = Avatar(base=base, primary_color=primary_color, head=head, eyes=eyes)
-    except ValueError as exc:
-        raise HTTPException(status_code=422, detail=str(exc))
-    _check_choices(avatar, pet_type)
-    return Response(renderer.render(avatar, Pet(type=pet_type, stage=stage)), media_type="image/svg+xml")
+def preview_svg(request: Request, base: str) -> Response:
+    """Draws unsaved choices, so the onboarding screens can show a live preview.
+
+    The choices come as extra query parameters named after the option, e.g. ?base=human&hair=short01&skin=ffdbac
+    """
+    picked = {k: v for k, v in request.query_params.items() if k != "base"}
+    avatar = Avatar(base=base, options=picked)
+    _check_choices(avatar)
+    return Response(renderer.render(avatar), media_type="image/svg+xml")
 
 
 @router.get("/{student_id}")
@@ -72,13 +59,12 @@ def get_student(student_id: UUID) -> Student:
 
 @router.put("/{student_id}")
 def save_student(student_id: UUID, body: SaveRequest) -> Student:
-    _check_choices(body.avatar, body.pet_type)
+    _check_choices(body.avatar)
     student = storage.load(student_id)
     if student is None:
         student = Student(student_id=student_id, avatar=body.avatar, pet=Pet(type=body.pet_type), preferences=body.preferences)
     else:  # editing later: keep the pet's growth and the support history
         student.avatar = body.avatar
-        student.pet.type = body.pet_type
         student.preferences = body.preferences
     storage.save(student)
     return student
@@ -87,7 +73,7 @@ def save_student(student_id: UUID, body: SaveRequest) -> Student:
 @router.get("/{student_id}/render.svg")
 def render_svg(student_id: UUID) -> Response:
     student = _get_or_404(student_id)
-    return Response(renderer.render(student.avatar, student.pet), media_type="image/svg+xml")
+    return Response(renderer.render(student.avatar), media_type="image/svg+xml")
 
 
 @router.post("/{student_id}/events")

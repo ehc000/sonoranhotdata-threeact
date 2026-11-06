@@ -15,7 +15,7 @@ import streamlit as st
 
 API_BASE_URL = os.environ.get("API_BASE_URL", "http://localhost:8000")
 API = f"{API_BASE_URL}/avatar"
-AVATAR_STEPS = ["base", "color", "head", "eyes", "pet", "name"]
+AVATAR_STEPS = ["base", "customize", "name"]
 # Demo only: in the real app the teacher enters these when creating the student profile.
 TEACHER_INTERESTS = ["cars", "space"]
 
@@ -68,18 +68,13 @@ def questions() -> list:
 
 
 @st.cache_data(show_spinner=False)
-def preview(base: str, color: str, head: str, eyes: str, pet: str, stage: int = 1) -> str:
-    params = {"base": base, "primary_color": color, "head": head, "eyes": eyes, "pet_type": pet, "stage": stage}
-    return call("GET", "/preview.svg", params=params).text
+def preview(base: str, options: tuple) -> str:
+    """Draw unsaved choices. `options` is a tuple of (option, choice) pairs so Streamlit can cache the answer."""
+    return call("GET", "/preview.svg", params={"base": base, **dict(options)}).text
 
 
-AVATAR_ONLY, PET_ONLY = "0 0 100 100", "100 0 100 100"  # the picture is 200 wide: avatar on the left, pet on the right
-
-
-def show_svg(svg: str, width: str = "100%", view: str | None = None, alt: str = "") -> None:
-    """Show an SVG string; `view` crops it to one half (avatar or pet)."""
-    if view:
-        svg = svg.replace('viewBox="0 0 200 100"', f'viewBox="{view}"', 1)
+def show_svg(svg: str, width: str = "100%", alt: str = "") -> None:
+    """Show an SVG string as a picture."""
     data = base64.b64encode(svg.encode()).decode()
     st.markdown(f'<img src="data:image/svg+xml;base64,{data}" style="width:{width}" alt="{html.escape(alt)}">', unsafe_allow_html=True)
 
@@ -97,22 +92,18 @@ student_id = st.query_params["student"]
 
 def go_onboarding(mode: str) -> None:
     """mode 'new' = all steps; 'edit' = avatar steps only, keeping saved answers."""
-    cat = catalog()
     if mode == "edit":
-        saved = call("GET", f"/{student_id}").json()
-        a = saved["avatar"]
-        ss.draft = {"base": a["base"], "color": a["primary_color"], "head": a["head"], "eyes": a["eyes"],
-                    "pet": saved["pet"]["type"], "name": a["display_name"]}
+        a = call("GET", f"/{student_id}").json()["avatar"]
+        ss.draft = {"base": a["base"], "options": dict(a["options"]), "name": a["display_name"]}
     else:
-        ss.draft = {"base": cat["bases"][0], "color": cat["colors"][0], "head": cat["heads"][cat["bases"][0]][0],
-                    "eyes": cat["eyes"][0], "pet": cat["pets"][0], "name": ""}
+        ss.draft = {"base": catalog()["bases"][0]["id"], "options": {}, "name": ""}
     ss.answers = {"interests": list(TEACHER_INTERESTS)}
     ss.mode, ss.step, ss.screen = mode, 1 if mode == "edit" else 0, "onboarding"
 
 
 def save(skip: bool = False) -> None:
     """Send the choices to the API; skipping saves the default companion."""
-    d, saved = ss.draft, None
+    d = ss.draft
     if ss.mode == "edit":
         saved = call("GET", f"/{student_id}").json()
         prefs, static = saved["preferences"], saved["avatar"]["static_mode"]
@@ -126,9 +117,8 @@ def save(skip: bool = False) -> None:
                 prefs[q["field"]] = chosen or []
             elif chosen and not skip:
                 prefs[q["field"]] = next(o["value"] for o in q["options"] if o["id"] == chosen)
-    body = {"avatar": {"base": d["base"], "primary_color": d["color"], "head": d["head"], "eyes": d["eyes"],
-                       "display_name": d["name"], "static_mode": static},
-            "pet_type": d["pet"], "preferences": prefs}
+    body = {"avatar": {"base": d["base"], "options": d["options"], "display_name": d["name"], "static_mode": static},
+            "preferences": prefs}
     r = call("PUT", f"/{student_id}", json=body)
     if r.status_code != 200:
         problem(f"Could not save (HTTP {r.status_code}): {r.text}")
@@ -170,8 +160,7 @@ def option_cards(options: list, current: str, key: str, image) -> str | None:
         on = opt == current
         with col, st.container(key=f"{'sel' if on else 'card'}-{key}-{opt}", border=True):
             image(opt)
-            if st.button(("✓ " if on else "") + pretty(opt.split("_", 1)[-1] if key == "head" else opt),
-                         key=f"{key}-{opt}", type="primary" if on else "secondary"):
+            if st.button(("✓ " if on else "") + pretty(opt), key=f"{key}-{opt}", type="primary" if on else "secondary"):
                 return opt
     return None
 
@@ -183,8 +172,8 @@ def onboarding() -> None:
     last = ss.step == len(steps) - 1
 
     # The page title is the question for this step, so each screen says what to do in one line.
-    titles = {"welcome": "Let's create your companion", "base": "Pick a type", "color": "Pick a color", "head": "Pick a head",
-              "eyes": "Pick the eyes", "pet": "Pick a pet", "name": "Give it a name (optional)", **{q["id"]: q["title"] for q in qs}}
+    titles = {"welcome": "Let's create your companion", "base": "Pick a type", "customize": "Make it yours",
+              "name": "Give it a name (optional)", **{q["id"]: q["title"] for q in qs}}
     st.title(titles[step])
     if step != "welcome":
         n_avatar = len(AVATAR_STEPS)
@@ -201,7 +190,7 @@ def onboarding() -> None:
         st.rerun()
     # Avatar steps always have a default; a single-choice question needs an answer first.
     # The nickname and the multi-choice questions can be skipped.
-    answered = step == "welcome" or step in d or step in ss.answers or any(q["type"] == "text" or q["multi"] for q in qs if q["id"] == step)
+    answered = step == "welcome" or step in AVATAR_STEPS or step in ss.answers or any(q["type"] == "text" or q["multi"] for q in qs if q["id"] == step)
     if step == "welcome":
         if next_col.button("Start", type="primary"):
             ss.step = 1
@@ -214,15 +203,10 @@ def onboarding() -> None:
             st.rerun()
     st.divider()
 
-    def pick(key: str, value) -> None:
-        d[key] = value
-        if key == "base":  # a head from another base would not fit, so start with the first one
-            d["head"] = cat["heads"][value][0]
-        st.rerun()
+    bases = {b["id"]: b for b in cat["bases"]}
 
-    def draw(**over) -> str:
-        v = {"base": d["base"], "color": d["color"], "head": d["head"], "eyes": d["eyes"], "pet": d["pet"], **over}
-        return preview(v["base"], v["color"], v["head"], v["eyes"], v["pet"], v.get("stage", 1))
+    def draw(base: str | None = None, options: dict | None = None) -> str:
+        return preview(base or d["base"], tuple(sorted((d["options"] if options is None else options).items())))
 
     if step == "welcome":
         _, middle, _ = st.columns([1, 2, 1])
@@ -232,33 +216,34 @@ def onboarding() -> None:
         if st.button("Skip for now"):
             save(skip=True)
     elif step == "base":
-        c =option_cards(cat["bases"], d["base"], "base", lambda o: show_svg(draw(base=o, head=cat["heads"][o][0]), view=AVATAR_ONLY))
+        c = option_cards(list(bases), d["base"], "base", lambda o: show_svg(draw(base=o, options={})))
         if c:
-            pick("base", c)
-    elif step == "color":
-        cols = st.columns(len(cat["colors"]))
-        for col, color, color_name in zip(cols, cat["colors"], cat["color_names"]):
-            with col:
-                st.markdown(f'<div style="height:48px;border-radius:12px;background:{color};border:2px solid #5F7080" role="img" aria-label="{color_name}"></div>', unsafe_allow_html=True)
-                on = color == d["color"]
-                if st.button(("✓ " if on else "") + color_name, key=f"color-{color}", type="primary" if on else "secondary"):
-                    pick("color", color)
-        show_svg(draw(), "50%")
-    elif step == "head":
-        c =option_cards(cat["heads"][d["base"]], d["head"], "head", lambda o: show_svg(draw(head=o), view=AVATAR_ONLY))
-        if c:
-            pick("head", c)
-    elif step == "eyes":
-        c =option_cards(cat["eyes"], d["eyes"], "eyes", lambda o: show_svg(draw(eyes=o), view=AVATAR_ONLY))
-        if c:
-            pick("eyes", c)
-    elif step == "pet":
-        c =option_cards(cat["pets"], d["pet"], "pet", lambda o: show_svg(draw(pet=o, stage=3), view=PET_ONLY))  # stage 3 so the pets are easy to tell apart
-        if c:
-            pick("pet", c)
+            d["base"], d["options"] = c, {}  # another base has other options, so start again from its defaults
+            st.rerun()
+    elif step == "customize":
+        _, middle, _ = st.columns([1, 2, 1])
+        with middle:
+            show_svg(draw(), alt="Your companion so far")
+        for opt in bases[d["base"]]["options"]:
+            st.subheader(opt["label"])
+            current = d["options"].get(opt["id"], opt["default"])
+            per_row = 6 if opt["choices"][0].get("swatch") else 4
+            for start in range(0, len(opt["choices"]), per_row):
+                cols = st.columns(per_row)
+                for col, ch in zip(cols, opt["choices"][start:start + per_row]):
+                    on = ch["id"] == current
+                    with col:
+                        if ch.get("swatch"):  # colors show a small square so the student does not need to read
+                            st.markdown(f'<div style="height:32px;border-radius:10px;background:{ch["swatch"]};border:2px solid #5F7080" role="img" aria-label="{ch["label"]}"></div>', unsafe_allow_html=True)
+                        label = ("✓" if on else "Pick") if ch.get("swatch") else ("✓ " if on else "") + ch["label"]
+                        if st.button(label, key=f"{opt['id']}-{ch['id']}", type="primary" if on else "secondary"):
+                            d["options"][opt["id"]] = ch["id"]
+                            st.rerun()
     elif step == "name":
         d["name"] = st.text_input("Your companion's name", value=d["name"], max_chars=20)
-        show_svg(draw(), "60%")
+        _, middle, _ = st.columns([1, 2, 1])
+        with middle:
+            show_svg(draw())
     else:  # a questionnaire question
         q = next(q for q in qs if q["id"] == step)
         if q["type"] == "text":  # the nickname: a short typed answer, never the full name
@@ -282,7 +267,7 @@ def companion() -> None:
     st.title(name or "My companion")
     _, middle, _ = st.columns([1, 4, 1])  # centered, always in the same place
     with middle:
-        show_svg(call("GET", f"/{student_id}/render.svg").text, alt=f"{name or 'Your'} companion and pet")
+        show_svg(call("GET", f"/{student_id}/render.svg").text, alt=f"{name or 'Your'} companion")
     if st.button("Change my companion"):
         go_onboarding("edit")
         st.rerun()
@@ -309,7 +294,6 @@ def companion() -> None:
             r = ss.result
             with st.container(border=True):
                 st.markdown("**Teacher view**")
-                st.write(f"Pet stage: {r['stage']} of 5")
                 st.write(f"Reward suggestion: {r['reward_suggestion'] or 'none for this event'}")
                 st.write(f"Support trend: {r['fading_trend'].replace('_', ' ')}")
         if st.button("Start over with a new demo student"):

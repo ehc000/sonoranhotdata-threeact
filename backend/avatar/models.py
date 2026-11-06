@@ -12,9 +12,7 @@ from pydantic import BaseModel, Field, model_validator
 
 class Avatar(BaseModel):
     base: str  # human / animal / robot / creature
-    primary_color: str = Field(pattern=r"^#[0-9A-Fa-f]{6}$")
-    head: str
-    eyes: str
+    options: dict[str, str] = {}  # option id -> choice id, e.g. {"hair": "short01"}; anything missing uses the default
     display_name: str = Field(default="", max_length=20)  # the avatar's name, not the student's
     static_mode: bool = False  # True turns off all motion
 
@@ -56,7 +54,7 @@ class Student(BaseModel):
 class SaveRequest(BaseModel):
     """Body of PUT /avatar/{student_id}."""
     avatar: Avatar
-    pet_type: str
+    pet_type: str = "plant"  # pets are on hold: nothing shows or asks for them for now
     preferences: Preferences
 
 

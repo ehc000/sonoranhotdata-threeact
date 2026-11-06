@@ -1,13 +1,13 @@
-"""Draws every SVG part in backend/avatar/assets/ (heads, eyes, pets) in one soft, rounded style.
+"""Draws the pet SVG files in backend/avatar/assets/pets/ in one soft, rounded style.
+
+Pets are on hold, and the avatars no longer use these files (they are drawn by DiceBear and sprites.py).
 
 Run from the project root:  python tools/make_assets.py
-Re-running rewrites all 40 files, so change a drawing here, not in the SVG files.
+Re-running rewrites all 20 files, so change a drawing here, not in the SVG files.
 
 How the look is built (so every part matches):
 - Same soft outline on everything (a darker, half-transparent line).
 - Every filled shape gets a gentle top-to-bottom shine drawn over it (the "sh" gradient).
-- Heads use currentColor; the renderer sets it to the student's primary color.
-- Hair, ears and horns are the same color, just darker, so any primary color looks right.
 """
 import math
 from pathlib import Path
@@ -50,65 +50,6 @@ def P(tag: str, attrs: str, fill: str) -> str:
     """Fixed-color part (pets) with the same outline and shine."""
     return f'<{tag} {attrs} fill="{fill}" {LINE}/><{tag} {attrs} fill="url(#sh)"/>'
 
-
-CHEEKS = '<circle cx="31" cy="55" r="4.5" fill="#F29CB0" fill-opacity=".35"/><circle cx="69" cy="55" r="4.5" fill="#F29CB0" fill-opacity=".35"/>'
-MOUTH = f'<path d="M45 59.5 Q50 61 55 59.5" fill="none" stroke="{DARK}" stroke-width="1.8" stroke-linecap="round"/>'
-FACE = CHEEKS + MOUTH
-NOSE = '<ellipse cx="50" cy="54" rx="3" ry="2.2" fill="#C97C8C"/>'
-NECK_AND_SHOULDERS = B("path", 'd="M16 100 Q16 78 38 76 L62 76 Q84 78 84 100Z"') + W("path", 'd="M42 76 Q50 85 58 76Z"', 0.0) + \
-    '<path d="M42 76 Q50 85 58 76Z" fill="#1F2D3A" fill-opacity=".18"/>'
-ANTENNA = f'<line x1="50" y1="18" x2="50" y2="9" {LINE}/>' + B("circle", 'cx="50" cy="7" r="4"')
-PLATE = f'<rect x="26" y="36" width="48" height="24" rx="12" fill="#FFFFFF" fill-opacity=".55" stroke="#3E5062" stroke-opacity=".3" stroke-width="1.2"/>'
-GRILLE = f'<path d="M44 66 L56 66 M45 69 L55 69" stroke="{DARK}" stroke-width="1.6" stroke-linecap="round"/>'
-LIGHTS = '<circle cx="31" cy="64" r="2.2" fill="#F2D98B"/><circle cx="69" cy="64" r="2.2" fill="#9CCB9F"/>'
-tufts = "".join(B("circle", f'cx="{50 + 28 * math.cos(a * math.pi / 5):.1f}" cy="{46 + 28 * math.sin(a * math.pi / 5):.1f}" r="6.5"') for a in range(10))
-muzzle = W("ellipse", 'cx="50" cy="57" rx="11" ry="8"', 0.4)
-whiskers = f'<path d="M22 52 L36 54 M22 59 L36 58 M78 52 L64 54 M78 59 L64 58" stroke="{DARK}" stroke-opacity=".5" stroke-width="1.2" stroke-linecap="round"/>'
-spots = '<circle cx="36" cy="28" r="3" fill="#1F2D3A" fill-opacity=".15"/><circle cx="62" cy="32" r="4" fill="#1F2D3A" fill-opacity=".15"/>'
-
-HEADS = {
-    "human_round": B("circle", 'cx="50" cy="44" r="28"') + B("circle", 'cx="22" cy="48" r="4.5"') + B("circle", 'cx="78" cy="48" r="4.5"')
-    + D("path", 'd="M22 42 Q22 14 50 14 Q78 14 78 42 Q66 26 50 26 Q34 26 22 42Z"', 0.45) + FACE,
-    "human_oval": D("path", 'd="M20 44 Q16 8 50 8 Q84 8 80 44 L84 84 Q70 90 66 76 L34 76 Q30 90 16 84Z"', 0.45)
-    + B("ellipse", 'cx="50" cy="44" rx="24" ry="30"') + D("path", 'd="M26 40 Q28 15 50 15 Q72 15 74 40 Q62 30 50 24 Q40 32 26 40Z"', 0.45) + FACE,
-    "human_square": B("rect", 'x="22" y="16" width="56" height="56" rx="14"') + D("path", 'd="M21 34 Q20 8 50 8 Q80 8 79 34 Q50 22 21 34Z"', 0.45) + FACE,
-    "human_soft": D("circle", 'cx="50" cy="9" r="10"', 0.45) + B("rect", 'x="22" y="18" width="56" height="54" rx="25"')
-    + D("path", 'd="M23 40 Q22 12 50 12 Q78 12 77 40 Q64 24 50 24 Q36 24 23 40Z"', 0.45) + FACE,
-    "animal_cat": D("path", 'd="M24 38 L26 6 L47 21Z"', 0.3) + D("path", 'd="M76 38 L74 6 L53 21Z"', 0.3)
-    + W("path", 'd="M29 30 L30 15 L40 23Z M71 30 L70 15 L60 23Z"', 0.5) + B("circle", 'cx="50" cy="46" r="27"') + muzzle + NOSE + whiskers + FACE,
-    "animal_dog": D("ellipse", 'cx="21" cy="46" rx="9" ry="18"', 0.4) + D("ellipse", 'cx="79" cy="46" rx="9" ry="18"', 0.4)
-    + B("ellipse", 'cx="50" cy="46" rx="27" ry="26"') + muzzle + NOSE.replace('rx="3" ry="2.2"', 'rx="4" ry="3"') + FACE,
-    "animal_rabbit": B("ellipse", 'cx="38" cy="15" rx="7.5" ry="19"') + B("ellipse", 'cx="62" cy="15" rx="7.5" ry="19"')
-    + W("ellipse", 'cx="38" cy="16" rx="3.5" ry="13"', 0.5) + W("ellipse", 'cx="62" cy="16" rx="3.5" ry="13"', 0.5)
-    + B("ellipse", 'cx="50" cy="47" rx="25" ry="27"') + muzzle + NOSE + FACE,
-    "animal_bear": B("circle", 'cx="27" cy="23" r="11"') + B("circle", 'cx="73" cy="23" r="11"') + W("circle", 'cx="27" cy="24" r="5.5"', 0.45)
-    + W("circle", 'cx="73" cy="24" r="5.5"', 0.45) + B("circle", 'cx="50" cy="46" r="27"') + muzzle + NOSE + FACE,
-    "robot_round": ANTENNA + B("circle", 'cx="50" cy="44" r="27"') + PLATE + GRILLE + LIGHTS,
-    "robot_square": ANTENNA + B("rect", 'x="22" y="18" width="56" height="54" rx="9"') + PLATE + GRILLE + LIGHTS,
-    "robot_dome": ANTENNA + B("path", 'd="M22 72 L22 46 A28 28 0 0 1 78 46 L78 72Z"') + PLATE + GRILLE + LIGHTS,
-    "robot_oval": ANTENNA + B("circle", 'cx="19" cy="44" r="5"') + B("circle", 'cx="81" cy="44" r="5"') + B("ellipse", 'cx="50" cy="44" rx="29" ry="25"') + PLATE + GRILLE + LIGHTS,
-    "creature_blob": B("path", 'd="M22 52 C16 22 38 12 54 14 C78 16 84 38 78 56 C72 72 28 74 22 52Z"') + spots + FACE,
-    "creature_horned": D("path", 'd="M30 26 L24 4 L44 19Z"', 0.2) + D("path", 'd="M70 26 L76 4 L56 19Z"', 0.2) + B("circle", 'cx="50" cy="46" r="27"') + spots + FACE,
-    "creature_fuzzy": tufts + f'<circle cx="50" cy="46" r="27" fill="currentColor"/><circle cx="50" cy="46" r="27" fill="url(#sh)"/>' + FACE,
-    "creature_finned": D("path", 'd="M32 24 Q50 -4 68 24Z"', 0.25) + D("ellipse", 'cx="21" cy="46" rx="7" ry="11"', 0.25) + D("ellipse", 'cx="79" cy="46" rx="7" ry="11"', 0.25)
-    + B("ellipse", 'cx="50" cy="46" rx="27" ry="25"') + spots + FACE,
-}
-for name, shape in HEADS.items():
-    write(f"heads/{name}.svg", NECK_AND_SHOULDERS + shape)
-
-# Eyes sit at y=47 on every head; the highlight dot keeps them friendly but never expressive.
-def shine(x: float, dx: float = 1.4) -> str:
-    return f'<circle cx="{x + dx}" cy="45.6" r="1.4" fill="#FFFFFF"/>'
-
-
-EYES = {
-    "dots": "".join(f'<circle cx="{x}" cy="47" r="3.2" fill="{DARK}"/>{shine(x, 0.9)}' for x in (38, 62)),
-    "round": "".join(f'<circle cx="{x}" cy="47" r="5.5" fill="{DARK}"/><circle cx="{x + 1.6}" cy="45.4" r="2" fill="#FFFFFF"/>' for x in (38, 62)),
-    "soft_curve": f'<path d="M33 47 Q38 48.5 43 47 M57 47 Q62 48.5 67 47" fill="none" stroke="{DARK}" stroke-width="2.8" stroke-linecap="round"/>',
-    "wide": "".join(f'<ellipse cx="{x}" cy="47" rx="6.5" ry="4.8" fill="{DARK}"/><circle cx="{x + 1.8}" cy="45.6" r="1.6" fill="#FFFFFF"/>' for x in (38, 62)),
-}
-for name, shape in EYES.items():
-    write(f"eyes/{name}.svg", shape)
 
 SHADOW = '<ellipse cx="50" cy="92" rx="28" ry="4" fill="#1F2D3A" fill-opacity=".1"/>'
 PINK, GREEN, SAND, LILAC, STEEL, GOLD, POT = "#EFB3C4", "#A7D8AA", "#F4D9BC", "#CDBBE6", "#CBD9E4", "#F4DC93", "#E8B596"

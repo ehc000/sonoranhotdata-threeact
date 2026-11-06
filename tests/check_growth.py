@@ -9,7 +9,7 @@ NOW = datetime(2026, 11, 2, tzinfo=timezone.utc)
 
 
 def new_student() -> Student:
-    avatar = Avatar(base="robot", primary_color="#A8C5DA", head="robot_round", eyes="dots")
+    avatar = Avatar(base="robot")
     return Student(student_id=uuid4(), avatar=avatar, pet=Pet(type="plant"), preferences=Preferences())
 
 
