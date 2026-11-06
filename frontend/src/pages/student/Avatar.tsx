@@ -66,11 +66,13 @@ export default function Avatar({ student, onUpdate: _onUpdate }: { student: Stud
     {!isUuid(student.id) && <p role="status" style={{ padding: 10, background: '#fff4dd', borderRadius: 8, fontSize: 13 }}>Demo mode: your changes preview in the teacher lesson without saving to a student account.</p>}
     {catalog && avatar ? <div className="card" style={{ display: 'grid', gap: 14, padding: 18 }}>
       <label style={field}>Avatar name<input style={control} maxLength={20} placeholder="Give your character a name" value={avatar.display_name} onChange={e => setAvatar({ ...avatar, display_name: e.target.value })} /></label>
-      <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', alignItems: 'center', gap: 20, padding: '14px 8px', border: '1px solid #d7e1e8', background: '#eef4f7', borderRadius: 12 }}>
-        <PixelAvatarImage src={preview} alt="Live sharp character preview" size={220} />
-        <span style={{ fontSize: 12, color: '#4c6376' }}>Miguel's original avatar portrait</span>
-        <div style={{background:'#dcebf3',borderRadius:12,padding:12,width:'min(100%,260px)',boxSizing:'border-box',textAlign:'center'}}>
-          <strong style={{fontSize:13,color:'#27364b'}}>Exactly as shown in lessons</strong>
+      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(210px,1fr))',gap:14,alignItems:'stretch'}}>
+        <div style={{padding:12,background:'#eef4f7',borderRadius:12,textAlign:'center',minWidth:0}}>
+          <strong style={{display:'block',marginBottom:10}}>Design</strong>
+          <PixelAvatarImage src={preview} alt="Avatar design preview" size={190}/>
+        </div>
+        <div style={{padding:12,background:'#dcebf3',borderRadius:12,textAlign:'center',minWidth:0}}>
+          <strong style={{display:'block',marginBottom:10}}>In Lessons</strong>
           <svg viewBox="0 0 100 110" role="img" aria-label="Live pixel-art lesson avatar" style={{display:'block',width:170,height:187,margin:'auto',imageRendering:'pixelated'}}><g transform="translate(8 8)"><LessonAvatarSprite choice={avatar}/></g></svg>
         </div>
       </div>

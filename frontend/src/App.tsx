@@ -46,7 +46,7 @@ import MockLesson from './components/lesson/MockLesson';
 export default function App() {
   // Existing application navigation.
   const [role, setRole] = useState<Role | null>(null);
-  const [page, setPage] = useState('Home');
+  const [page, setPage] = useState('Learn');
 
   // Existing frontend demo data.
   const [students, setStudents] = useLocalState<Student[]>(
@@ -113,7 +113,7 @@ export default function App() {
 
   const chooseRole = (next: Role) => {
     setRole(next);
-    setPage(next === 'student' ? 'Home' : 'Dashboard');
+    setPage(next === 'student' ? 'Learn' : 'Dashboard');
   };
 
   if (!role) {
@@ -185,18 +185,13 @@ export default function App() {
           </span>
         </header>
 
-        {/* AI-assisted: Temporary preview controls for student testing only. */}
-        {role === 'student' && (
+        {/* Demo only: teachers can generate real lessons under Teacher → Assignments. */}
+        {role === 'student' && page === 'Avatar' && (
           <div style={{ padding: '12px 20px', display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-            {page !== 'Mock Lesson' ? (
-              <button type="button" onClick={() => setPage('Mock Lesson')}>
-                Preview Fraction Fortress
-              </button>
-            ) : (
-              <button type="button" onClick={() => setPage('Home')}>
-                Back to Home
-              </button>
-            )}
+            <button type="button" onClick={() => setPage('Mock Lesson')}>
+              Example demo: Fraction Fortress
+            </button>
+            <span style={{fontSize:12,color:'#64748b',alignSelf:'center'}}>Sample only · Generate a new lesson under Teacher → Assignments</span>
           </div>
         )}
 

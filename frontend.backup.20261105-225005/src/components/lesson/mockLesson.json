@@ -1,0 +1,61 @@
+{
+  "lesson_id": "fraction-fortress-demo",
+  "title": "Fraction Fortress",
+  "total_bridge_sections": 8,
+  "story": {
+    "intro": {
+      "Simple": "Alex needs to cross the river. Fix the bridge by solving two fraction puzzles.",
+      "Moderate": "Alex the fox has reached a river. Solve two fraction puzzles to rebuild the bridge and reach the castle.",
+      "Rich": "Beyond the emerald meadow, the gates of Fraction Fortress shimmer in the distance. Alex the fox must restore the ancient river bridge by solving two fraction puzzles."
+    },
+    "refresher": {
+      "Simple": "A fraction is part of a whole. Half of 8 means 8 split into 2 equal groups.",
+      "Moderate": "A fraction represents equal parts of a whole. To find one-half of 8, divide 8 into two equal groups.",
+      "Rich": "Every bridge stone belongs to a larger whole. A fraction describes equal shares: one-half of 8 means separating 8 stones into two equal groups."
+    },
+    "success": {
+      "Simple": "More bridge pieces appear! Keep going.",
+      "Moderate": "Alex places another set of stones. The bridge is taking shape!",
+      "Rich": "With a satisfying click, another stretch of golden stones locks into place. The path to the fortress grows stronger!"
+    },
+    "finale": {
+      "Simple": "You finished the bridge! Alex can cross.",
+      "Moderate": "The bridge is complete, and Alex can finally reach the castle!",
+      "Rich": "The last stone settles into place. The river glitters below as Alex crosses the restored bridge and arrives at the gates of Fraction Fortress!"
+    }
+  },
+  "questions": [
+    {
+      "id": "q1",
+      "prompt": "The bridge has 8 stones. How many stones are in 1/2 of the bridge?",
+      "options": [
+        "2",
+        "4",
+        "6"
+      ],
+      "hint": "Divide 8 into 2 equal groups: 8 ÷ 2 = ?",
+      "bridge_sections_after": 4,
+      "narrative": {
+        "Simple": "Alex sees 8 stones. Find half to help fix the bridge.",
+        "Moderate": "Alex finds eight stones by the river. Work out how many make up half of them.",
+        "Rich": "At the riverbank, Alex discovers eight weathered stones. To restore the first stretch of the bridge, determine how many stones form one-half of the collection."
+      }
+    },
+    {
+      "id": "q2",
+      "prompt": "A second section has 12 stones. How many stones are in 1/4 of it?",
+      "options": [
+        "3",
+        "4",
+        "6"
+      ],
+      "hint": "Divide 12 into 4 equal groups: 12 ÷ 4 = ?",
+      "bridge_sections_after": 8,
+      "narrative": {
+        "Simple": "There are 12 more stones. Find one-fourth.",
+        "Moderate": "Alex finds twelve more stones. Work out how many make up one-quarter of them.",
+        "Rich": "A second pile of twelve stones waits beside the fortress river. Alex needs one-quarter of that pile to finish the crossing."
+      }
+    }
+  ]
+}

@@ -1,6 +1,6 @@
-import { BookOpen, ClipboardCheck, Home, UserRound, Palette, LayoutDashboard, Users, ListTodo, ChartNoAxesCombined, Settings, LogOut } from 'lucide-react';
+import { BookOpen, ClipboardCheck, UserRound, Palette, LayoutDashboard, Users, ListTodo, ChartNoAxesCombined, Settings, LogOut } from 'lucide-react';
 import type { Role } from '../types';
-const studentItems = [{name:'Home',icon:Home},{name:'Calibration',icon:ClipboardCheck},{name:'Learn',icon:BookOpen},{name:'Profile',icon:UserRound},{name:'Avatar',icon:Palette}];
+const studentItems = [{name:'Learn',icon:BookOpen},{name:'Avatar',icon:Palette},{name:'Profile',icon:UserRound},{name:'Calibration',icon:ClipboardCheck}];
 const teacherItems = [{name:'Dashboard',icon:LayoutDashboard},{name:'Students',icon:Users},{name:'Assignments',icon:ListTodo},{name:'Analytics',icon:ChartNoAxesCombined},{name:'Settings',icon:Settings}];
 export default function Sidebar({role,page,onNavigate,onSignOut}:{role:Role;page:string;onNavigate:(page:string)=>void;onSignOut:()=>void}) {
   const items = role === 'student' ? studentItems : teacherItems;

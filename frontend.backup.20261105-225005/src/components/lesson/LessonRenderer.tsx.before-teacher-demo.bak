@@ -1,0 +1,179 @@
+/**
+ * File: LessonRenderer.tsx
+ * Purpose: Render assembled mission lessons with local, simulated progress tracking.
+ * Directed by: Edenna Chen
+ * AI-assisted implementation: ChatGPT (OpenAI), GPT-6, 2026-11-05
+ * Human review: Pending
+ * Notes: No persistence, assignment, answer verification, or mastery updates.
+ */
+import { useEffect, useState } from 'react';
+
+export type LessonQuestion = {
+  question_id: string;
+  text: string;
+  story_dialogue?: string;
+  narrative?: string;
+  challenge_transition?: string;
+  optional_reminder?: string;
+  optional_walkthrough?: string[];
+  story_bridge?: string;
+  success_event?: string;
+  mission_task_title?: string;
+  mission_task_purpose?: string;
+  before_visual_prompt?: string;
+  after_visual_prompt?: string;
+  visual_prompt?: string;
+};
+
+export type RenderableLesson = {
+  lesson_id: string;
+  objective: string;
+  story: { title: string; story_goal?: string };
+  mission?: { title?: string; goal?: string; starting_state?: string; final_state?: string };
+  milestones?: Array<{ question_id: string; title: string; purpose?: string; unlocks?: string }>;
+  introduction: string;
+  refresher?: string | {
+    concept?: string;
+    explanation?: string;
+    worked_example?: string | { question?: string; steps?: string[]; answer?: string };
+  };
+  activities: Array<{ activity_number: number; questions: LessonQuestion[] }>;
+  conclusion: string;
+  story_complexity?: string;
+  alignment_warning?: string | null;
+};
+
+type Screen = 'opening' | 'refresher' | 'challenge' | 'success' | 'finale' | 'trophy';
+
+type Props = { lesson: RenderableLesson };
+
+// AI-ASSISTED ADDITION: This component only simulates completion for UI testing.
+// The future student player must use verified answers before recording progress.
+export default function LessonRenderer({ lesson }: Props) {
+  const [screen, setScreen] = useState<Screen>('opening');
+  const [challengeIndex, setChallengeIndex] = useState(0);
+  const [showHelp, setShowHelp] = useState(false);
+  const [completedIds, setCompletedIds] = useState<string[]>([]);
+  const questions = lesson.activities.flatMap(activity => activity.questions);
+  const question = questions[challengeIndex];
+  const total = questions.length;
+
+  useEffect(() => {
+    setScreen('opening');
+    setChallengeIndex(0);
+    setShowHelp(false);
+    setCompletedIds([]);
+  }, [lesson.lesson_id]);
+
+  const taskTitle = (q: LessonQuestion, index: number) =>
+    lesson.milestones?.find(item => String(item.question_id) === String(q.question_id))?.title
+    ?? q.mission_task_title
+    ?? `Challenge ${index + 1}`;
+
+  function simulateCompletion() {
+    if (!question) return;
+    setCompletedIds(previous => previous.includes(String(question.question_id))
+      ? previous : [...previous, String(question.question_id)]);
+    setScreen('success');
+  }
+
+  function nextChallenge() {
+    setShowHelp(false);
+    if (challengeIndex + 1 < total) {
+      setChallengeIndex(index => index + 1);
+      setScreen('challenge');
+    } else {
+      setScreen('finale');
+    }
+  }
+
+  function restart() {
+    setScreen('opening');
+    setChallengeIndex(0);
+    setCompletedIds([]);
+    setShowHelp(false);
+  }
+
+  return (
+    <div className="card lesson-card" aria-label="Mission lesson renderer">
+      <p className="eyebrow">MISSION LESSON · DEMO RENDERING</p>
+      <h2>{lesson.mission?.title || lesson.story.title}</h2>
+      <p className="muted small">Simulated progress only · No answers are checked or saved</p>
+      {lesson.alignment_warning && <p role="alert">Teacher review: {lesson.alignment_warning}</p>}
+      <div aria-label="Mission progress" style={{ margin: '16px 0' }}>
+        <strong>{completedIds.length} of {total} mission steps completed (demo)</strong>
+        <progress max={Math.max(total, 1)} value={completedIds.length} style={{ display: 'block', width: '100%', marginTop: 8 }} />
+      </div>
+
+      {screen === 'opening' && <section>
+        <h3>Your mission</h3>
+        <p>{lesson.mission?.goal || lesson.story.story_goal || lesson.objective}</p>
+        <p>{lesson.introduction}</p>
+        <ol>{questions.map((q, index) => <li key={q.question_id}>{taskTitle(q, index)}</li>)}</ol>
+        <button className="btn primary" onClick={() => setScreen('refresher')}>Start mission</button>
+      </section>}
+
+      {screen === 'refresher' && <section>
+        <h3>Quick refresher</h3>
+        {typeof lesson.refresher === 'string' ? <p>{lesson.refresher}</p> : <>
+          <h4>{lesson.refresher?.concept || lesson.objective}</h4>
+          <p>{lesson.refresher?.explanation || 'Review the learning goal before beginning.'}</p>
+          {typeof lesson.refresher?.worked_example === 'string'
+            ? <p>{lesson.refresher.worked_example}</p>
+            : lesson.refresher?.worked_example && <div>
+              <h4>Worked example</h4>
+              <p>{lesson.refresher.worked_example.question}</p>
+              <ol>{lesson.refresher.worked_example.steps?.map((step, index) => <li key={index}>{step}</li>)}</ol>
+              <p><strong>Example answer:</strong> {lesson.refresher.worked_example.answer}</p>
+            </div>}
+        </>}
+        <button className="btn primary" onClick={() => setScreen(total ? 'challenge' : 'finale')}>Go to first challenge</button>
+      </section>}
+
+      {screen === 'challenge' && question && <section key={question.question_id}>
+        <p className="tag">STEP {challengeIndex + 1} OF {total}</p>
+        <h3>{taskTitle(question, challengeIndex)}</h3>
+        {question.story_bridge && <p>{question.story_bridge}</p>}
+        <p>{question.story_dialogue || question.narrative}</p>
+        {question.challenge_transition && <p>{question.challenge_transition}</p>}
+        <div style={{ border: '1px solid #ccc', padding: 16, borderRadius: 12, margin: '12px 0' }}>
+          <strong>Your challenge</strong>
+          <p>{question.text}</p>
+        </div>
+        <button className="btn ghost" aria-expanded={showHelp} onClick={() => setShowHelp(value => !value)}>
+          {showHelp ? 'Hide help' : 'Ask for help'}
+        </button>
+        {showHelp && <div>
+          {question.optional_reminder && <p>{question.optional_reminder}</p>}
+          {!!question.optional_walkthrough?.length && <ol>{question.optional_walkthrough.map((hint, index) => <li key={index}>{hint}</li>)}</ol>}
+        </div>}
+        <p className="muted small">This is a rendering demo. Use the button below to simulate a completed challenge.</p>
+        <button className="btn primary" onClick={simulateCompletion}>Simulate completed step</button>
+      </section>}
+
+      {screen === 'success' && question && <section>
+        <h3>Step completed (demo)</h3>
+        <p>{question.success_event || `${taskTitle(question, challengeIndex)} is complete.`}</p>
+        <button className="btn primary" onClick={nextChallenge}>
+          {challengeIndex + 1 < total ? 'Next challenge' : 'See mission finale'}
+        </button>
+      </section>}
+
+      {screen === 'finale' && <section>
+        <h3>Mission finale</h3>
+        <p>{lesson.conclusion}</p>
+        <p className="muted small">All steps were simulated for UI testing.</p>
+        <button className="btn primary" onClick={() => setScreen('trophy')}>See trophy</button>
+      </section>}
+
+      {screen === 'trophy' && <section style={{ textAlign: 'center' }}>
+        <div aria-hidden="true" style={{ fontSize: 52 }}>🏆</div>
+        <h3>Mission complete!</h3>
+        <p>{total} of {total} steps simulated.</p>
+        <p className="muted small">Demo trophy only. No student achievement has been recorded.</p>
+      </section>}
+
+      <button className="btn ghost" onClick={restart} style={{ marginTop: 20 }}>Restart demo</button>
+    </div>
+  );
+}

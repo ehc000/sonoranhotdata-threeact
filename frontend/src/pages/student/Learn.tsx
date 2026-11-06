@@ -26,203 +26,75 @@
  *   - Generated stories and visuals will be integrated separately.
  */
 
-import { useState } from 'react';
-import { lessonSteps } from '../../data/mock';
 import type { Student } from '../../types';
-import ProgressBar from '../../components/ProgressBar';
+import LessonAvatarSprite from '../../components/lesson/LessonAvatarSprite';
+import type { LessonAvatarChoice } from '../../components/lesson/LessonAvatarSprite';
 
 // AI ADDITION: Reusable browser text-to-speech component.
-import ListenButton from '../../components/ListenButton';
 
 export default function Learn({
-  student,
-  onComplete,
+  student: _student,
+  onComplete: _onComplete,
 }: {
   student: Student;
   onComplete: () => void;
 }) {
-  // ORIGINAL: Track the current instructional step.
-  const [step, setStep] = useState(0);
-
-  // ORIGINAL: Track the student's selected answer.
-  const [answer, setAnswer] = useState('');
-
-  // ORIGINAL: Track whether the answer has been checked.
-  const [checked, setChecked] = useState(false);
-
-  // ORIGINAL: Prevent duplicate completion callbacks.
-  const [completed, setCompleted] = useState(false);
-
-  const correct = answer === 'correct';
+  const avatarChoice: LessonAvatarChoice | null = (() => {
+    try { const saved = localStorage.getItem('sonoran-lesson-avatar-preview'); return saved ? JSON.parse(saved) as LessonAvatarChoice : null; }
+    catch { return null; }
+  })();
 
   return (
-    <div className="page narrow">
-      <p className="eyebrow">MY LESSON · FRACTIONS</p>
-
-      <h1>Equal parts, made simple</h1>
-
-      <p className="lead">
-        One idea at a time. Go at your own pace.
-      </p>
-
-      <section className="card" aria-label="Learning pathway" style={{marginBottom:18}}>
-        <h2 style={{fontSize:19,marginTop:0}}>My learning pathway</h2>
-        <p className="muted small">Example pathway · not verified competency results</p>
-        <div style={{display:'flex',alignItems:'center',flexWrap:'wrap',gap:9}}>
-          {['Understand equal parts','Identify fractions','Compare fractions','Solve fraction problems'].map((skill,i)=><div key={skill} style={{display:'flex',alignItems:'center',gap:9}}>
-            {i>0&&<span aria-hidden="true" style={{color:'#7c8c9c'}}>→</span>}
-            <span style={{padding:'11px 13px',borderRadius:12,border:i===0?'2px solid #407eaa':'1px solid #cbd9e3',background:i===0?'#e9f4ff':'#f8fafc',fontWeight:i===0?750:500,fontSize:13}}>{skill}</span>
+    <div className="page" style={{maxWidth:1280}}>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',gap:16,flexWrap:'wrap',marginBottom:16}}>
+        <div style={{display:'flex',alignItems:'center',gap:15}}>
+          <svg width="72" height="82" viewBox="0 0 90 110" aria-label="Your pixel avatar" style={{overflow:'visible'}}>
+            <LessonAvatarSprite choice={avatarChoice}/>
+          </svg>
+          <div><p className="eyebrow" style={{margin:0}}>STUDENT LEARNING · EXAMPLE ADVENTURE</p><h1 style={{margin:'4px 0'}}>Your Adventure</h1><p className="muted" style={{margin:0}}>Collect artifacts as you learn, one lesson at a time.</p></div>
+        </div>
+        <div style={{display:'flex',gap:10,flexWrap:'wrap'}}>
+          {['🏅 2 artifacts','🏆 2 completed','⭐ 1 current'].map(t=><span key={t} style={{padding:'10px 14px',borderRadius:12,background:'#fffaf3',border:'1px solid #e7d9cb',fontWeight:700,fontSize:13}}>{t}</span>)}
+        </div>
+      </div>
+      <section aria-label="Example video game learning pathway" style={{borderRadius:22,overflow:'hidden',border:'1px solid #c8c3ba',background:'#b9d6db',position:'relative'}}>
+        <svg viewBox="0 0 1050 530" role="img" aria-label="Muted pixel island adventure background" style={{width:'100%',display:'block',imageRendering:'pixelated'}} preserveAspectRatio="xMidYMid slice">
+          <defs><linearGradient id="sea" x1="0" y1="0" x2="0" y2="1"><stop stopColor="#b4d8df"/><stop offset="1" stopColor="#6eabb7"/></linearGradient></defs>
+          <rect width="1050" height="530" fill="url(#sea)"/>
+          <path d="M0 125 L95 100 150 120 225 75 305 110 360 90 430 125 525 80 620 105 700 70 795 130 860 100 930 120 1050 75 V0 H0Z" fill="#d8d0bf" opacity=".8"/>
+          <path d="M0 175 L120 135 190 155 255 112 315 160 390 135 450 175 540 132 635 170 715 128 800 160 910 118 1050 170 V0 H0Z" fill="#91b7a3" opacity=".65"/>
+          {Array.from({length:36},(_,i)=><rect key={i} x={(i*127)%1050} y={175+(i*73)%340} width={24+(i%4)*9} height="3" fill="#e2e6da" opacity=".27"/>)}
+          <path d="M145 270 C260 380 325 370 500 285 S750 215 905 300" stroke="#655e4f" strokeWidth="35" fill="none" strokeLinecap="square"/>
+          <path d="M145 270 C260 380 325 370 500 285 S750 215 905 300" stroke="#d8b283" strokeWidth="26" fill="none" strokeDasharray="18 6" strokeLinecap="square"/>
+          {[[145,270],[495,285],[820,245],[945,315]].map(([x,y],i)=><g key={i}>
+            <ellipse cx={x} cy={y+34} rx="104" ry="39" fill="#517c78" opacity=".55"/>
+            <path d={`M${x-100} ${y+8} l25 -30 125 -5 50 28 -15 32 -155 15Z`} fill={i===3?'#8b9491':'#648b6e'} stroke="#596b61" strokeWidth="9"/>
+            <path d={`M${x-85} ${y-6} l26 -20 115 -5 40 25 -22 19 -127 9Z`} fill={i===3?'#a5aca8':'#94b77a'}/>
+            {Array.from({length:6},(_,j)=><rect key={j} x={x-62+j*20} y={y-24-(j%3)*4} width="9" height="8" fill="#79a56b"/>)}
+          </g>)}
+          <g opacity=".65"><path d="M40 155l40 -55 40 55zM890 125l45 -65 55 65z" fill="#6f9b7f"/><rect x="75" y="153" width="10" height="38" fill="#6b7566"/><rect x="933" y="123" width="12" height="46" fill="#6b7566"/></g>
+        </svg>
+        <div style={{position:'absolute',inset:0,pointerEvents:'none'}}>
+          {[
+            {name:'Map the Parts',skill:'Identify equal parts of a whole',artifact:'🗺️',state:'complete',x:14,y:51},
+            {name:'Compare the Isles',skill:'Compare simple fractions',artifact:'🧭',state:'complete',x:47,y:54},
+            {name:'Build Fractions',skill:'Add fractions with like denominators',artifact:'💎',state:'current',x:78,y:46},
+            {name:'The Hidden Temple',skill:'Solve fraction word problems',artifact:'🔒',state:'locked',x:91,y:60},
+          ].map(node=><div key={node.name} style={{position:'absolute',left:`${node.x}%`,top:`${node.y}%`,transform:'translate(-50%,-50%)',width:node.state==='locked'?'16%':'22%',minWidth:95,maxWidth:230,display:'flex',flexDirection:'column',alignItems:'center',gap:5}}>
+            <span aria-hidden="true" style={{fontSize:'clamp(21px,2.6vw,40px)',filter:node.state==='locked'?'grayscale(1)':'drop-shadow(2px 3px 0 #665a4b)'}}>{node.artifact}</span>
+            <div style={{width:'100%',boxSizing:'border-box',background:node.state==='current'?'#fff8e8':'rgba(255,251,245,.95)',border:node.state==='current'?'2px solid #b7833d':'1px solid #e4d9c8',borderRadius:12,padding:'8px 6px',textAlign:'center',boxShadow:'0 4px 12px #324a4c35'}}>
+              <strong style={{fontSize:'clamp(10px,1.15vw,15px)',color:'#4c2735',display:'block'}}>{node.name}</strong>
+              <span style={{display:'block',fontSize:'clamp(9px,.9vw,12px)',lineHeight:1.3,margin:'4px 0',color:'#52565b'}}>Competency: {node.skill}</span>
+              <span style={{fontSize:'clamp(9px,.8vw,11px)',fontWeight:800,color:node.state==='current'?'#7d4b24':'#536456'}}>{node.state==='complete'?'✓ Artifact collected':node.state==='current'?'CURRENT · 60%':'LOCKED'}</span>
+              {node.state==='current'&&<div style={{height:7,background:'#e5d7c8',borderRadius:20,marginTop:5,overflow:'hidden'}}><div style={{width:'60%',height:'100%',background:'#58a579'}}/></div>}
+            </div>
           </div>)}
         </div>
       </section>
-      <div className="card lesson-card">
-        <div className="lesson-top">
-          <span className="tag">
-            STEP {step + 1} OF {lessonSteps.length}
-          </span>
-
-          <span className="muted small">
-            {student.pace}
-          </span>
-        </div>
-
-        {/* ORIGINAL: Lesson progress indicator. */}
-        <ProgressBar
-          value={((step + 1) / lessonSteps.length) * 100}
-        />
-
-        {/* ORIGINAL: Placeholder visual for fractions. */}
-        <div
-          className="lesson-visual"
-          aria-label="A circle divided into two equal halves"
-        >
-          ◐
-        </div>
-
-        {/* ORIGINAL: Display current instructional step. */}
-        <h2>{lessonSteps[step]}</h2>
-
-        {/*
-          AI ADDITION: Read the current lesson instruction aloud.
-
-          Uses the same text already displayed on screen.
-          The student can start or stop narration manually.
-        */}
-        <ListenButton
-          text={lessonSteps[step]}
-          label="Listen to lesson"
-        />
-
-        {/* ORIGINAL: Show the practice question on the final step. */}
-        {step === lessonSteps.length - 1 ? (
-          <>
-            <p className="question">
-              What does one-half mean?
-            </p>
-
-            {/*
-              AI ADDITION: Read the practice question aloud.
-
-              This is separate from the instructional narration,
-              allowing students to replay only the question.
-            */}
-            <ListenButton
-              text="What does one-half mean?"
-              label="Listen to question"
-            />
-
-            {/* ORIGINAL: Multiple-choice answer options. */}
-            <div className="answer-list">
-              {[
-                ['correct', 'One of two equal parts'],
-                ['incorrect', 'One of three equal parts'],
-              ].map(([value, label]) => (
-                <label
-                  key={value}
-                  className={
-                    'answer ' +
-                    (answer === value ? 'picked' : '')
-                  }
-                >
-                  <input
-                    type="radio"
-                    name="fraction-answer"
-                    checked={answer === value}
-                    onChange={() => {
-                      setAnswer(value);
-                      setChecked(false);
-                    }}
-                  />
-
-                  {label}
-                </label>
-              ))}
-            </div>
-
-            {/* ORIGINAL: Answer feedback. */}
-            {checked && (
-              <p
-                className={
-                  correct
-                    ? 'feedback success'
-                    : 'feedback hint'
-                }
-                role="status"
-              >
-                {correct
-                  ? 'Correct! You found the equal parts.'
-                  : 'Not quite. Look for two equal-sized pieces.'}
-              </p>
-            )}
-
-            {/* ORIGINAL: Lesson completion message. */}
-            {completed && (
-              <p
-                className="feedback success"
-                role="status"
-              >
-                Lesson complete! Your demo progress was updated.
-              </p>
-            )}
-
-            {/* ORIGINAL: Check answer and update completion. */}
-            <button
-              className="btn primary"
-              disabled={!answer || completed}
-              onClick={() => {
-                setChecked(true);
-
-                if (correct && !completed) {
-                  setCompleted(true);
-                  onComplete();
-                }
-              }}
-            >
-              Check answer
-            </button>
-          </>
-        ) : (
-          /* ORIGINAL: Advance to the next instructional step. */
-          <button
-            className="btn primary"
-            onClick={() => setStep((x) => x + 1)}
-          >
-            Next step →
-          </button>
-        )}
-
-        {/* ORIGINAL: Restart the lesson. */}
-        <button
-          className="btn ghost"
-          onClick={() => {
-            setStep(0);
-            setAnswer('');
-            setChecked(false);
-            setCompleted(false);
-          }}
-        >
-          Restart lesson
-        </button>
+      <p className="muted small" style={{margin:'8px 0 18px'}}>Demo learning pathway · Achievements and progress are illustrative. One current lesson is active at a time.</p>
+      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(260px,1fr))',gap:16,marginBottom:18}}>
+        <div className="card" style={{padding:18}}><h3 style={{marginTop:0}}>🏆 Your Progress</h3><p>2 completed lessons · 1 current lesson</p><div style={{height:11,borderRadius:10,background:'#e9e0d8'}}><div style={{width:'50%',height:'100%',borderRadius:10,background:'#69977c'}}/></div></div>
+        <div className="card" style={{padding:18}}><h3 style={{marginTop:0}}>🎯 Current Goal</h3><p>Finish “Build Fractions” to collect the crystal artifact and unlock the next adventure.</p></div>
       </div>
     </div>
   );
