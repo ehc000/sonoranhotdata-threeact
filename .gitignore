@@ -236,3 +236,24 @@ __pycache__/
 *.db
 *.db-shm
 *.db-wal
+# Local secrets
+.env
+.env.*
+!.env.example
+
+# Python
+.venv/
+__pycache__/
+.pytest_cache/
+
+# Frontend
+node_modules/
+dist/
+
+# Local development files
+frontend.backup.*/
+*.db
+*.db-shm
+*.db-wal
+.DS_Store
+.env
